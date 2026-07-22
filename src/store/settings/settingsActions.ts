@@ -80,9 +80,9 @@ export const settingsActions = {
     NotificationSettingsPayload
   >('settings/updateNotificationSettings', SettingsService.updateNotificationSettings),
 
-  getChatwootVersion: createSettingsThunk<{ version: string }, { installationUrl: string }>(
-    'settings/getChatwootVersion',
-    ({ installationUrl }) => SettingsService.getChatwootVersion(installationUrl),
+  getFoxDeskVersion: createSettingsThunk<{ version: string }, { installationUrl: string }>(
+    'settings/getFoxDeskVersion',
+    ({ installationUrl }) => SettingsService.getFoxDeskVersion(installationUrl),
   ),
 
   saveDeviceDetails: createAsyncThunk<{ fcmToken: string }, void>(

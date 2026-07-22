@@ -6,7 +6,7 @@ export * from './Camera';
 export * from './CaretBottomSmall';
 export * from './CaretRight';
 export * from './Chat';
-export * from './Chatwoot';
+export * from './FoxDesk';
 export * from './ChevronLeft';
 export * from './Clear';
 export * from './Close';

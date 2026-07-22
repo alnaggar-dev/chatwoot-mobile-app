@@ -1,15 +1,19 @@
 import { ConfigContext, ExpoConfig } from 'expo/config';
 
+// Universal/app links require this host to serve apple-app-site-association and
+// /.well-known/assetlinks.json. Leave unset until your domain serves both.
+const deepLinkHost = process.env.EXPO_PUBLIC_DEEP_LINK_HOST;
+
 export default ({ config }: ConfigContext): ExpoConfig => {
   return {
-    name: 'Chatwoot',
-    slug: process.env.EXPO_PUBLIC_APP_SLUG || 'chatwoot-mobile',
+    name: 'FoxDesk Ai',
+    slug: process.env.EXPO_PUBLIC_APP_SLUG || 'foxdesk-mobile',
     version: '4.7.0',
     orientation: 'portrait',
     icon: './assets/icon.png',
     userInterfaceStyle: 'light',
     newArchEnabled: false,
-    scheme: 'chatwootapp',
+    scheme: 'foxdeskapp',
     splash: {
       image: './assets/splash.png',
       resizeMode: 'contain',
@@ -18,7 +22,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     ios: {
       supportsTablet: true,
-      bundleIdentifier: 'com.chatwoot.app',
+      bundleIdentifier: 'com.foxdesk.app',
       infoPlist: {
         NSCameraUsageDescription:
           'This app requires access to the camera to upload images and videos.',
@@ -33,33 +37,37 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // Please use the relative path to the google-services.json file
       googleServicesFile: process.env.EXPO_PUBLIC_IOS_GOOGLE_SERVICES_FILE,
       entitlements: { 'aps-environment': 'production' },
-      associatedDomains: ['applinks:app.chatwoot.com'],
+      ...(deepLinkHost ? { associatedDomains: [`applinks:${deepLinkHost}`] } : {}),
     },
     android: {
       adaptiveIcon: { foregroundImage: './assets/adaptive-icon.png', backgroundColor: '#ffffff' },
-      package: 'com.chatwoot.app',
+      package: 'com.foxdesk.app',
       permissions: ['android.permission.CAMERA', 'android.permission.RECORD_AUDIO'],
       // Please use the relative path to the google-services.json file
       googleServicesFile: process.env.EXPO_PUBLIC_ANDROID_GOOGLE_SERVICES_FILE,
       intentFilters: [
+        ...(deepLinkHost
+          ? [
+              {
+                action: 'VIEW',
+                autoVerify: true,
+                data: [
+                  {
+                    scheme: 'https',
+                    host: deepLinkHost,
+                    pathPrefix: '/app/accounts/',
+                    pathPattern: '/*/conversations/*',
+                  },
+                ],
+                category: ['BROWSABLE', 'DEFAULT'],
+              },
+            ]
+          : []),
         {
           action: 'VIEW',
-          autoVerify: true,
           data: [
             {
-              scheme: 'https',
-              host: 'app.chatwoot.com',
-              pathPrefix: '/app/accounts/',
-              pathPattern: '/*/conversations/*',
-            },
-          ],
-          category: ['BROWSABLE', 'DEFAULT'],
-        },
-        {
-          action: 'VIEW',
-          data: [
-            {
-              scheme: 'chatwootapp',
+              scheme: 'foxdeskapp',
             },
           ],
           category: ['BROWSABLE', 'DEFAULT'],
@@ -72,7 +80,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         storybookEnabled: process.env.EXPO_STORYBOOK_ENABLED,
       },
     },
-    owner: 'chatwoot',
+    owner: process.env.EXPO_PUBLIC_APP_OWNER,
     plugins: [
       'expo-font',
       ['react-native-permissions', { iosPermissions: ['Camera', 'PhotoLibrary', 'MediaLibrary'] }],

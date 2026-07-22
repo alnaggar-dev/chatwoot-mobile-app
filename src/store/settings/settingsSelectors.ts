@@ -33,10 +33,10 @@ export const selectWebSocketUrl = createSelector(selectSettings, settings => set
 
 export const selectTheme = createSelector(selectSettings, settings => settings.theme);
 
-export const selectIsChatwootCloud = createSelector(selectSettings, settings =>
-  settings.installationUrl.includes('app.chatwoot.com'),
+export const selectIsFoxDeskCloud = createSelector(selectSettings, settings =>
+  settings.installationUrl.includes('app.foxdeskai.com'),
 );
 
-export const selectChatwootVersion = createSelector(selectSettings, settings => settings.version);
+export const selectFoxDeskVersion = createSelector(selectSettings, settings => settings.version);
 
 export const selectPushToken = createSelector(selectSettings, settings => settings.pushToken);

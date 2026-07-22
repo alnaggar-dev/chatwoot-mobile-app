@@ -7,7 +7,7 @@ import { tailwind } from '@/theme';
 import { useHaptic } from '@/utils';
 import { useAppSelector } from '@/hooks';
 import {
-  selectChatwootVersion,
+  selectFoxDeskVersion,
   selectInstallationUrl,
   selectPushToken,
   selectWebSocketUrl,
@@ -27,8 +27,8 @@ interface DebugAction {
 
 const DEBUG_ACTIONS: DebugAction[] = [
   {
-    key: 'chatwoot_version',
-    label: 'Chatwoot Version',
+    key: 'foxdesk_version',
+    label: 'FoxDesk Version',
     value: '',
   },
   {
@@ -51,7 +51,7 @@ const DEBUG_ACTIONS: DebugAction[] = [
 const DebugActionCell = ({ item, index, isLastItem }: DebugActionCellProps) => {
   const installationUrl = useAppSelector(selectInstallationUrl);
   const webSocketUrl = useAppSelector(selectWebSocketUrl);
-  const version = useAppSelector(selectChatwootVersion);
+  const version = useAppSelector(selectFoxDeskVersion);
   const pushToken = useAppSelector(selectPushToken);
 
   const hapticSelection = useHaptic();
@@ -71,7 +71,7 @@ const DebugActionCell = ({ item, index, isLastItem }: DebugActionCellProps) => {
         return installationUrl;
       case 'web_socket_url':
         return webSocketUrl;
-      case 'chatwoot_version':
+      case 'foxdesk_version':
         return version;
       case 'push_token':
         return pushToken;

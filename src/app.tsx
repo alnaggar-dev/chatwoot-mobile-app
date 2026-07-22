@@ -7,7 +7,7 @@ import { AppNavigator } from '@/navigation';
 
 import i18n from '@/i18n';
 
-const Chatwoot = () => {
+const FoxDesk = () => {
   useEffect(() => {
     BackHandler.addEventListener('hardwareBackPress', handleBackButtonClick);
     return () => {
@@ -40,4 +40,4 @@ const Chatwoot = () => {
   );
 };
 
-export default Chatwoot;
+export default FoxDesk;

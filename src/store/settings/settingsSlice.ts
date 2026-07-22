@@ -20,8 +20,8 @@ interface SettingsState {
   pushToken: string;
 }
 const initialState: SettingsState = {
-  baseUrl: 'app.chatwoot.com',
-  installationUrl: 'https://app.chatwoot.com/',
+  baseUrl: 'app.foxdeskai.com',
+  installationUrl: 'https://app.foxdeskai.com/',
   uiFlags: {
     isSettingUrl: false,
     isUpdating: false,
@@ -37,7 +37,7 @@ const initialState: SettingsState = {
     selected_push_flags: [],
     user_id: 0,
   },
-  webSocketUrl: 'wss://app.chatwoot.com/cable',
+  webSocketUrl: 'wss://app.foxdeskai.com/cable',
   theme: 'system',
   version: '',
   pushToken: '',
@@ -85,7 +85,7 @@ export const settingsSlice = createSlice({
       .addCase(settingsActions.updateNotificationSettings.rejected, state => {
         state.uiFlags.isUpdating = false;
       })
-      .addCase(settingsActions.getChatwootVersion.fulfilled, (state, action) => {
+      .addCase(settingsActions.getFoxDeskVersion.fulfilled, (state, action) => {
         const { version } = action.payload;
         state.version = version;
       })

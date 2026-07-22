@@ -14,7 +14,7 @@
   },
   "CONFIGURE_URL": {
     "ENTER_URL": "Kurulum URL'si",
-    "DESCRIPTION": "Kendi barındırdığınız bir Chatwoot kurulumu kullanıyorsanız, sunucu URL'nizi girin. Aksi takdirde app.chatwoot.com'u kullanın.",
+    "DESCRIPTION": "Kendi barındırdığınız bir FoxDesk Ai kurulumu kullanıyorsanız, sunucu URL'nizi girin. Aksi takdirde app.foxdeskai.com'u kullanın.",
     "URL_ERROR": "Geçerli bir URL girin",
     "URL_REQUIRED": "URL gereklidir",
     "CONNECT": "Bağlan",
@@ -405,19 +405,19 @@
     "CHANGE_TEAMS": "Görüşme takımı değişti"
   },
   "ERRORS": {
-    "COMMON_ERROR": "Chatwoot Sunucusuna bağlanılamadı, Lütfen daha sonra tekrar deneyin",
+    "COMMON_ERROR": "FoxDesk Ai Sunucusuna bağlanılamadı, Lütfen daha sonra tekrar deneyin",
     "OfFLINE": "Tekrar çevrimiçi olmak için kablosuz ağa veya hücresel ağa bağlanmanız gerekir",
     "CANNOT_FETCH": "Bilgi alınırken bir hata oluştu, lütfen tekrar deneyin",
     "AUTH": "Kullanıcı Adı / Parola Yanlış. Lütfen tekrar deneyin",
-    "NO_ACCOUNTS_MESSAGE": "Herhangi bir chatwoot hesabına erişiminiz yok"
+    "NO_ACCOUNTS_MESSAGE": "Herhangi bir FoxDesk Ai hesabına erişiminiz yok"
   },
   "SUCCESS": {
     "AUTH": "Giriş başarılı"
   },
   "SERVER_UPGRADE": {
     "TITLE": "Sunucu yükseltmesi gerekiyor",
-    "WARNING_FOR_AGENT": "Görünüşe göre mobil uygulamanız için desteklenmeyen bir Chatwoot sunucusu kullanıyorsunuz. Lütfen Chatwoot sunucunuzu yükseltmek için sistem yöneticinizle iletişime geçin.",
-    "WARNING_FOR_ADMIN": "Görünüşe göre mobil uygulamanız için desteklenmeyen bir Chatwoot sunucusu kullanıyorsunuz. Sunucu sürümünü %{minimumVersion} veya daha yenisine yükseltmek gerekmektedir."
+    "WARNING_FOR_AGENT": "Görünüşe göre mobil uygulamanız için desteklenmeyen bir FoxDesk Ai sunucusu kullanıyorsunuz. Lütfen FoxDesk Ai sunucunuzu yükseltmek için sistem yöneticinizle iletişime geçin.",
+    "WARNING_FOR_ADMIN": "Görünüşe göre mobil uygulamanız için desteklenmeyen bir FoxDesk Ai sunucusu kullanıyorsunuz. Sunucu sürümünü %{minimumVersion} veya daha yenisine yükseltmek gerekmektedir."
   },
   "EXIT": {
     "TITLE": "Çıkış",

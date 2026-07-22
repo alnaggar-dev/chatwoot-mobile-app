@@ -1,5 +1,5 @@
 {
-  "name": "@chatwoot/mobile-app",
+  "name": "@foxdesk/mobile-app",
   "version": "4.7.0",
   "packageManager": "pnpm@10.11.0",
   "scripts": {

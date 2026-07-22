@@ -19,7 +19,7 @@ const nonAccountRoutes = [
   'profile/set_active_account',
 ];
 
-const CLIENT_NAME = 'Chatwoot Mobile';
+const CLIENT_NAME = 'FoxDesk Ai Mobile';
 const CLIENT_VERSION = Constants.expoConfig?.version ?? 'unknown';
 
 function deviceHeaders(): Record<string, string> {

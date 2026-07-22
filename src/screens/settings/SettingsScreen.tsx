@@ -13,7 +13,7 @@ import {
 } from '@gorhom/bottom-sheet';
 import DeviceInfo from 'react-native-device-info';
 import * as WebBrowser from 'expo-web-browser';
-import ChatWootWidget from '@chatwoot/react-native-widget';
+import LiveChatWidget from '@chatwoot/react-native-widget';
 import { useSelector } from 'react-redux';
 import * as Application from 'expo-application';
 import { Account, AvailabilityStatus } from '@/types';
@@ -42,7 +42,7 @@ import { UserAvatar } from './components/UserAvatar';
 
 import { LANGUAGES, TAB_BAR_HEIGHT } from '@/constants';
 import { useRefsContext } from '@/context';
-import { ChatwootIcon, NotificationIcon, SwitchIcon, TranslateIcon } from '@/svg-icons';
+import { FoxDeskIcon, NotificationIcon, SwitchIcon, TranslateIcon } from '@/svg-icons';
 import { GenericListType } from '@/types';
 
 import { useHaptic } from '@/utils';
@@ -57,7 +57,7 @@ import { logout, setAccount } from '@/store/auth/authSlice';
 import { authActions } from '@/store/auth/authActions';
 import {
   selectLocale,
-  selectIsChatwootCloud,
+  selectIsFoxDeskCloud,
   selectPushToken,
 } from '@/store/settings/settingsSelectors';
 import { settingsActions } from '@/store/settings/settingsActions';
@@ -122,9 +122,9 @@ const SettingsScreen = () => {
     operatingSystem: Platform.OS, // android/ios
   };
 
-  const isChatwootCloud = useAppSelector(selectIsChatwootCloud);
+  const isFoxDeskCloud = useAppSelector(selectIsFoxDeskCloud);
 
-  const chatwootInstance = isChatwootCloud ? `${appName} cloud` : `${appName} self-hosted`;
+  const foxDeskInstance = isFoxDeskCloud ? `${appName} cloud` : `${appName} self-hosted`;
 
   const accounts = useSelector(selectAccounts) || [];
 
@@ -267,7 +267,7 @@ const SettingsScreen = () => {
     {
       hasChevron: true,
       title: i18n.t('SETTINGS.CHAT_WITH_US'),
-      icon: <ChatwootIcon />,
+      icon: <FoxDeskIcon />,
       subtitle: '',
       subtitleType: 'light',
       onPressListItem: () => toggleWidget(true),
@@ -323,7 +323,7 @@ const SettingsScreen = () => {
           style={tailwind.style('p-4 items-center')}
           onLongPress={() => debugActionsSheetRef.current?.present()}>
           <Text style={tailwind.style('text-sm text-gray-700 ')}>
-            {`${chatwootInstance} ${appVersionDetails}`}
+            {`${foxDeskInstance} ${appVersionDetails}`}
           </Text>
         </Pressable>
       </Animated.ScrollView>
@@ -412,13 +412,13 @@ const SettingsScreen = () => {
           <DebugActions />
         </BottomSheetWrapper>
       </BottomSheetModal>
-      {!!process.env.EXPO_PUBLIC_CHATWOOT_WEBSITE_TOKEN &&
-        !!process.env.EXPO_PUBLIC_CHATWOOT_BASE_URL &&
+      {!!process.env.EXPO_PUBLIC_FOXDESK_WEBSITE_TOKEN &&
+        !!process.env.EXPO_PUBLIC_FOXDESK_BASE_URL &&
         !!showWidget && (
-          <ChatWootWidget
-            websiteToken={process.env.EXPO_PUBLIC_CHATWOOT_WEBSITE_TOKEN}
+          <LiveChatWidget
+            websiteToken={process.env.EXPO_PUBLIC_FOXDESK_WEBSITE_TOKEN}
             locale="en"
-            baseUrl={process.env.EXPO_PUBLIC_CHATWOOT_BASE_URL}
+            baseUrl={process.env.EXPO_PUBLIC_FOXDESK_BASE_URL}
             closeModal={() => toggleWidget(false)}
             isModalVisible={showWidget}
             user={userDetails}

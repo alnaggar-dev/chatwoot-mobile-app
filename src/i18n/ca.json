@@ -14,7 +14,7 @@
   },
   "CONFIGURE_URL": {
     "ENTER_URL": "URL d'instal·lació",
-    "DESCRIPTION": "Si utilitzes una instal·lació de Chatwoot autoallotjada, introdueix l'URL del teu servidor. En cas contrari, utilitza app.chatwoot.com.",
+    "DESCRIPTION": "Si utilitzes una instal·lació de FoxDesk Ai autoallotjada, introdueix l'URL del teu servidor. En cas contrari, utilitza app.foxdeskai.com.",
     "URL_ERROR": "Introduïu un URL vàlid",
     "URL_REQUIRED": "La URL és necessària",
     "CONNECT": "Connectar",
@@ -430,19 +430,19 @@
     "CHANGE_TEAMS": "Conversation team changed"
   },
   "ERRORS": {
-    "COMMON_ERROR": "No s'ha pogut connectar al servidor Chatwoot. Si us plau, torneu-ho a intentar més tard.",
+    "COMMON_ERROR": "No s'ha pogut connectar al servidor FoxDesk Ai. Si us plau, torneu-ho a intentar més tard.",
     "OfFLINE": "Has de connectar a la xarxa Wi-Fi o a una xarxa mòbil per tornar a connectar-te",
     "CANNOT_FETCH": "S'ha produït un error en obtenir la informació. Torna-ho a provar",
     "AUTH": "Nom d’usuari / contrasenya incorrecte. Si us plau torna-ho a provar",
-    "NO_ACCOUNTS_MESSAGE": "No tens accés a cap compte de Chatwoot"
+    "NO_ACCOUNTS_MESSAGE": "No tens accés a cap compte de FoxDesk Ai"
   },
   "SUCCESS": {
     "AUTH": "Inici de sessió correcte"
   },
   "SERVER_UPGRADE": {
     "TITLE": "Cal actualització del servidor",
-    "WARNING_FOR_AGENT": "Sembla que esteu utilitzant un servidor Chatwoot no compatible per a la vostra aplicació mòbil. Poseu-vos en contacte amb el vostre administrador per actualitzar el vostre servidor Chatwoot.",
-    "WARNING_FOR_ADMIN": "Sembla que esteu utilitzant un servidor Chatwoot no compatible per a la vostra aplicació mòbil. Cal actualitzar a la versió del servidor %{minimumVersion} o posterior."
+    "WARNING_FOR_AGENT": "Sembla que esteu utilitzant un servidor FoxDesk Ai no compatible per a la vostra aplicació mòbil. Poseu-vos en contacte amb el vostre administrador per actualitzar el vostre servidor FoxDesk Ai.",
+    "WARNING_FOR_ADMIN": "Sembla que esteu utilitzant un servidor FoxDesk Ai no compatible per a la vostra aplicació mòbil. Cal actualitzar a la versió del servidor %{minimumVersion} o posterior."
   },
   "EXIT": {
     "TITLE": "Sortir",

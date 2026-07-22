@@ -29,7 +29,7 @@ import SearchScreen from '@/screens/search/SearchScreen';
 import { selectInstallationUrl } from '@/store/settings/settingsSelectors';
 import { BottomTabBar } from './BottomTabBar';
 import { settingsActions } from '@/store/settings/settingsActions';
-import { selectChatwootVersion } from '@/store/settings/settingsSelectors';
+import { selectFoxDeskVersion } from '@/store/settings/settingsSelectors';
 import { checkServerSupport } from '@/utils/serverUtils';
 import { inboxActions } from '@/store/inbox/inboxActions';
 import { labelActions } from '@/store/label/labelActions';
@@ -79,7 +79,7 @@ const Tabs = () => {
   const dispatch = useAppDispatch();
   const user = useAppSelector(selectUser);
   const installationUrl = useAppSelector(selectInstallationUrl);
-  const chatwootVersion = useAppSelector(selectChatwootVersion);
+  const foxDeskVersion = useAppSelector(selectFoxDeskVersion);
   const currentAccount = useAppSelector(selectCurrentUserAccount);
   const currentAccountRole = currentAccount?.role;
   const pubSubToken = useAppSelector(selectPubSubToken);
@@ -134,7 +134,7 @@ const Tabs = () => {
   }, [accountId, pubSubToken, userId, webSocketUrl]);
 
   useEffect(() => {
-    dispatch(settingsActions.getChatwootVersion({ installationUrl: installationUrl }));
+    dispatch(settingsActions.getFoxDeskVersion({ installationUrl: installationUrl }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [installationUrl]);
 
@@ -146,13 +146,13 @@ const Tabs = () => {
   );
 
   const checkAppVersion = useCallback(async () => {
-    if (chatwootVersion) {
+    if (foxDeskVersion) {
       checkServerSupport({
-        installedVersion: chatwootVersion,
+        installedVersion: foxDeskVersion,
         userRole: currentAccountRole,
       });
     }
-  }, [chatwootVersion, currentAccountRole]);
+  }, [foxDeskVersion, currentAccountRole]);
 
   useEffect(() => {
     checkAppVersion();
