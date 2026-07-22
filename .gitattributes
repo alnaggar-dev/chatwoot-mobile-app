@@ -1,0 +1,75 @@
+# BEGIN fork-flow:gitattributes — managed block; re-run the kit installer to update.
+# Add your OWN merge=ours entries ABOVE this block (outside the markers): updates
+# REPLACE everything between the markers, but any active line above is preserved.
+#
+# merge=ours overrides — LAST RESORT (see your fork memory AGENTS.md, Fork Maintenance).
+#
+# A path listed here keeps YOUR version on every upstream merge and silently
+# hides upstream's changes. Use it only for whole files you intentionally own
+# (branding, generated config). Audit every listed path on each merge, and
+# never use it for one-line edits inside active upstream files — let those
+# conflict so rerere can learn the fix.
+#
+# Requires:  git config merge.ours.driver true   (set during setup)
+# Backstops: ./.fork/brief.sh flags changed merge=ours paths over the range;
+#            ./.fork/verify.sh fails if a listed path matches no tracked file.
+# Globs work (e.g. "*.svg", "assets/**") — both backstops read paths through git.
+#
+# Uncomment and adapt when you actually need one:
+# src/branding/logo.svg     merge=ours
+# src/config/branding.ts    merge=ours
+
+# --- Syntax-aware merge via mergiraf (https://mergiraf.org) — ON by default ----
+# A conservative AST merge driver that clears NOISE conflicts (reordered methods,
+# import churn, formatting) and FALLS BACK to conflict markers when unsure, so it
+# never silently mis-merges. The driver lines below are ACTIVE; they take effect
+# once the per-clone driver is registered: run ./.fork/setup.sh (also applied by
+# the kit's install.sh --setup). With the binary:
+#   git config merge.mergiraf.driver 'mergiraf merge --git %O %A %B -s %S -x %X -y %Y -p %P -l %L'
+# Without it, setup registers a safe Git text-merge fallback. Install Mergiraf with
+# cargo install mergiraf / brew install mergiraf, then re-run setup to activate it.
+# Add/trim the languages your fork edits; full list: mergiraf languages --gitattributes
+# Do NOT route lockfiles or generated files through it — regenerate those instead
+# (the unset lines below pull the lockfiles the globs would capture back out; the
+# lockfile/REGEN recipe, not a structural merge, owns them). NOTE: Vue SFCs are
+# NOT supported by mergiraf — plain text merge applies to *.vue.
+*.rs    merge=mergiraf
+*.ts    merge=mergiraf
+*.tsx   merge=mergiraf
+*.js    merge=mergiraf
+*.jsx   merge=mergiraf
+*.mjs   merge=mergiraf
+*.cjs   merge=mergiraf
+*.py    merge=mergiraf
+*.go    merge=mergiraf
+*.java  merge=mergiraf
+*.rb    merge=mergiraf
+*.kt    merge=mergiraf
+*.kts   merge=mergiraf
+*.php   merge=mergiraf
+*.cs    merge=mergiraf
+*.dart  merge=mergiraf
+*.c     merge=mergiraf
+*.h     merge=mergiraf
+*.cc    merge=mergiraf
+*.hh    merge=mergiraf
+*.cpp   merge=mergiraf
+*.hpp   merge=mergiraf
+*.ex    merge=mergiraf
+*.exs   merge=mergiraf
+*.scala merge=mergiraf
+*.sol   merge=mergiraf
+# Declarative formats mergiraf merges structurally:
+*.json  merge=mergiraf
+*.yml   merge=mergiraf
+*.yaml  merge=mergiraf
+*.toml  merge=mergiraf
+*.html  merge=mergiraf
+*.xml   merge=mergiraf
+*.ini   merge=mergiraf
+*.properties merge=mergiraf
+# Lockfiles the globs above would capture — regenerated, never merged:
+package-lock.json   !merge
+npm-shrinkwrap.json !merge
+pnpm-lock.yaml      !merge
+# END fork-flow:gitattributes

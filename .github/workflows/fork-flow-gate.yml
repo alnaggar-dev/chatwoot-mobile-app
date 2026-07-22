@@ -1,0 +1,57 @@
+# fork-flow CI gate — the SERVER-SIDE backstop for the client-side hooks.
+#
+# The git hooks are per-clone and bypassable (--no-verify, FORK_SKIP_VERIFY=1, a
+# clone that never ran ./.fork/setup.sh, a hook manager re-pointing core.hooksPath
+# during an install). This workflow re-runs the gate on every push/PR to
+# custom/main, so a commit that slipped past the local gate cannot land silently
+# broken.
+#
+# MODE (repo variable FORK_FLOW_CI_GATE; Settings -> Secrets and variables ->
+# Actions -> Variables — a repo variable survives kit updates, this FILE does not):
+#   full (default)  ./.fork/verify.sh — install + lint + test + build + registry.
+#                   This is the from-scratch backstop that EARNS the fast local
+#                   workflow: `port.sh run` gates each commit scoped to what it
+#                   touched and ends with `verify.sh --scoped` (registry + touched
+#                   entries' Test:), never a full local build. CI is where the
+#                   full proof runs.
+#   registry        ./.fork/verify.sh --registry — install-free presence checks
+#                   only (every Verify is sub-second on a bare clone BY CONTRACT).
+#                   Set this when the full gate cannot run on a hosted runner
+#                   (provisioned DB, huge install) — then run the full gate
+#                   somewhere yourself before releases.
+#
+# Toolchain: `corepack enable` covers pnpm/yarn pins. Anything more (bun, custom
+# services) belongs in .github/fork-flow-ci-setup.sh — a CONSUMER-owned hook this
+# workflow runs when present (kit installs never touch .github/*.sh).
+#
+# NOTE: GitHub disables workflows on a fresh fork until you enable them once (the
+# fork's Actions tab). Off GitHub this file is inert.
+#
+# Kit-owned: refreshed by the kit installer on every install/update.
+name: fork-flow gate
+on:
+  push:
+    branches: [custom/main]
+  pull_request:
+    branches: [custom/main]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  registry-gate: # id kept stable across kit versions (required-checks configs pin it)
+    runs-on: ubuntu-latest
+    env:
+      FORK_FLOW_CI_GATE: ${{ vars.FORK_FLOW_CI_GATE || 'full' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: toolchain (corepack + optional consumer setup hook)
+        run: |
+          corepack enable 2>/dev/null || true
+          if [ -x .github/fork-flow-ci-setup.sh ]; then ./.github/fork-flow-ci-setup.sh; fi
+      - name: fork-flow gate (full by default; FORK_FLOW_CI_GATE=registry to narrow)
+        run: |
+          if [ "$FORK_FLOW_CI_GATE" = "registry" ]; then
+            ./.fork/verify.sh --registry
+          else
+            ./.fork/verify.sh
+          fi

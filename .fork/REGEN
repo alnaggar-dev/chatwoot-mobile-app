@@ -1,0 +1,27 @@
+# .fork/REGEN — "take theirs + regenerate + stage" rules for conflicted GENERATED files.
+#
+# port.sh already auto-resolves conflicted LOCKFILES this way (upstream's side, then
+# the ecosystem's own re-resolver, then stage — a hand-merged lockfile only ever LOOKS
+# right). This table extends the same recipe to YOUR project's other generated files
+# (dumped DB schemas, generated API clients, compiled translations, ...).
+#
+# Format: one rule per non-comment line —
+#
+#     <path-glob><whitespace><command...>
+#
+# The first field is a shell glob (or literal path) matched against each conflicted
+# path (same matching as the registry's Touches anchors); the REST of the line is the
+# regeneration command, run via `bash -c` from the repo root. First matching rule wins.
+#
+# Contract, on a conflict matching a rule: port.sh takes UPSTREAM'S side of the file,
+# then runs the command to re-express your fork's state on top (exactly the lockfile
+# semantics). If the command fails, the conflict is RESTORED for manual resolution.
+# Disabled together with lockfile auto-resolve: --no-lockfile-auto or
+# FORK_FLOW_NO_LOCKFILE_AUTO=1.
+#
+# NOTE: these commands are project-controlled CODE run by port.sh — the same trust
+# class as a registry entry's Verify command. Review rules like you review hooks.
+#
+# Examples (commented out — uncomment/adapt for your project):
+# db/schema.rb      bundle exec rails db:migrate
+# db/structure.sql  bundle exec rails db:migrate
