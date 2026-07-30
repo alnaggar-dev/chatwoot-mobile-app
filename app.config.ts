@@ -7,7 +7,7 @@ const deepLinkHost = process.env.EXPO_PUBLIC_DEEP_LINK_HOST;
 export default ({ config }: ConfigContext): ExpoConfig => {
   return {
     name: 'FoxDesk Ai',
-    slug: process.env.EXPO_PUBLIC_APP_SLUG || 'foxdesk-mobile',
+    slug: 'foxdesk-ai',
     version: '4.7.0',
     orientation: 'portrait',
     icon: './assets/icon.png',
@@ -76,11 +76,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     extra: {
       eas: {
-        projectId: process.env.EXPO_PUBLIC_PROJECT_ID,
+        projectId: '4021c745-2764-4efb-86be-1b7247db3a78',
         storybookEnabled: process.env.EXPO_STORYBOOK_ENABLED,
       },
     },
-    owner: process.env.EXPO_PUBLIC_APP_OWNER,
+    owner: 'foxdeskais-team',
     plugins: [
       'expo-font',
       ['react-native-permissions', { iosPermissions: ['Camera', 'PhotoLibrary', 'MediaLibrary'] }],
