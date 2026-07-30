@@ -24,7 +24,8 @@ export const AuthButton = ({
 }: AuthButtonProps) => {
   const getButtonStyles = () => {
     const baseStyles = 'py-[11px] flex-row items-center justify-center rounded-control';
-    const variantStyles = variant === 'filled' ? 'bg-brand' : 'bg-gray-50';
+    const variantStyles =
+      variant === 'filled' ? 'bg-brand' : 'bg-surface-subtle border border-outline';
     const disabledStyles = disabled ? 'opacity-50' : '';
 
     return tailwind.style(baseStyles, variantStyles, disabledStyles);
@@ -32,7 +33,7 @@ export const AuthButton = ({
 
   const getTextStyles = () => {
     const baseStyles = 'ml-2 text-base font-medium';
-    const colorStyles = variant === 'filled' ? 'text-white' : 'text-gray-950';
+    const colorStyles = variant === 'filled' ? 'text-white' : 'text-ink';
 
     return tailwind.style(baseStyles, colorStyles);
   };
