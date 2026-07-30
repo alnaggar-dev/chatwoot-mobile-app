@@ -17,13 +17,6 @@ export const selectIsLocaleSet = createSelector(
   settings => settings.uiFlags.isLocaleSet,
 );
 
-export const selectIsSettingUrl = createSelector(
-  selectSettings,
-  settings => settings.uiFlags.isSettingUrl,
-);
-
-export const selectBaseUrl = createSelector(selectSettings, settings => settings.baseUrl);
-
 export const selectNotificationSettings = createSelector(
   selectSettings,
   settings => settings.notificationSettings,

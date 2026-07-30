@@ -29,7 +29,6 @@ export interface InstallationUrls {
 
 export interface SettingsState extends InstallationUrls {
   uiFlags: {
-    isSettingUrl: boolean;
     isUpdating: boolean;
     isLocaleSet: boolean;
   };

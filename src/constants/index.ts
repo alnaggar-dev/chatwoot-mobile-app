@@ -1,6 +1,5 @@
 export const SCREENS = {
   LOGIN: 'Login',
-  CONFIG_URL: 'ConfigureURL',
   CONVERSATION: 'ConversationScreen',
   // Deprecated
   NOTIFICATION: 'NotificationScreen',

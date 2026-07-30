@@ -11,6 +11,7 @@ import {
   REGISTER,
 } from 'redux-persist';
 import { appReducer } from '@/store/reducers';
+import { INSTALLATION_URL_DEFAULTS } from './settings/settingsSlice';
 import { setStore } from './storeAccessor';
 import { contactListenerMiddleware } from './contact/contactListener';
 
@@ -34,7 +35,13 @@ const persistConfig = {
         ...initialState,
       };
     }
-    return state;
+    return {
+      ...state,
+      settings: {
+        ...state.settings,
+        ...INSTALLATION_URL_DEFAULTS,
+      },
+    };
   },
 };
 

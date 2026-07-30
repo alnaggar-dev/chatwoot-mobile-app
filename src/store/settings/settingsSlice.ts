@@ -1,6 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { settingsActions } from './settingsActions';
-import * as RootNavigation from '@/utils/navigationUtils';
 import { NotificationSettings } from './settingsTypes';
 import { Theme } from '@/types/common/Theme';
 
@@ -8,7 +7,6 @@ interface SettingsState {
   baseUrl: string;
   installationUrl: string;
   uiFlags: {
-    isSettingUrl: boolean;
     isUpdating: boolean;
     isLocaleSet: boolean;
   };
@@ -19,11 +17,18 @@ interface SettingsState {
   version: string;
   pushToken: string;
 }
-const initialState: SettingsState = {
+
+export const INSTALLATION_URL_DEFAULTS: Pick<
+  SettingsState,
+  'baseUrl' | 'installationUrl' | 'webSocketUrl'
+> = {
   baseUrl: 'app.foxdeskai.com',
   installationUrl: 'https://app.foxdeskai.com/',
+  webSocketUrl: 'wss://app.foxdeskai.com/cable',
+};
+const initialState: SettingsState = {
+  ...INSTALLATION_URL_DEFAULTS,
   uiFlags: {
-    isSettingUrl: false,
     isUpdating: false,
     isLocaleSet: false,
   },
@@ -37,7 +42,6 @@ const initialState: SettingsState = {
     selected_push_flags: [],
     user_id: 0,
   },
-  webSocketUrl: 'wss://app.foxdeskai.com/cable',
   theme: 'system',
   version: '',
   pushToken: '',
@@ -47,7 +51,6 @@ export const settingsSlice = createSlice({
   initialState,
   reducers: {
     resetSettings: state => {
-      state.uiFlags.isSettingUrl = false;
       state.uiFlags.isUpdating = false;
     },
     setLocale: (state, action) => {
@@ -57,21 +60,6 @@ export const settingsSlice = createSlice({
   },
   extraReducers: builder => {
     builder
-      .addCase(settingsActions.setInstallationUrl.pending, state => {
-        state.uiFlags.isSettingUrl = true;
-      })
-      .addCase(settingsActions.setInstallationUrl.fulfilled, (state, action) => {
-        state.uiFlags.isSettingUrl = false;
-        state.installationUrl = action.payload.installationUrl;
-        state.baseUrl = action.payload.baseUrl;
-        state.webSocketUrl = action.payload.webSocketUrl;
-        RootNavigation.navigate('Login');
-      })
-      .addCase(settingsActions.setInstallationUrl.rejected, state => {
-        state.uiFlags.isSettingUrl = false;
-        state.installationUrl = '';
-        state.baseUrl = '';
-      })
       .addCase(settingsActions.getNotificationSettings.fulfilled, (state, action) => {
         state.notificationSettings = action.payload;
       })

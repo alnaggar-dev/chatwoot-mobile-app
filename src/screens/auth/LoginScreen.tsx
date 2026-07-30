@@ -26,11 +26,7 @@ import {
   Icon,
   AuthButton,
 } from '@/components-next';
-import {
-  selectInstallationUrl,
-  selectBaseUrl,
-  selectLocale,
-} from '@/store/settings/settingsSelectors';
+import { selectInstallationUrl, selectLocale } from '@/store/settings/settingsSelectors';
 import { selectIsLoggingIn } from '@/store/auth/authSelectors';
 import { setLocale } from '@/store/settings/settingsSlice';
 import { useRefsContext } from '@/context/RefsContext';
@@ -67,7 +63,6 @@ const LoginScreen = () => {
   const isLoggingIn = useAppSelector(selectIsLoggingIn);
 
   const installationUrl = useAppSelector(selectInstallationUrl);
-  const baseUrl = useAppSelector(selectBaseUrl);
   const activeLocale = useAppSelector(selectLocale);
 
   useEffect(() => {
@@ -79,10 +74,7 @@ const LoginScreen = () => {
 
   useEffect(() => {
     dispatch(resetAuth());
-    if (!installationUrl) {
-      navigation.navigate('ConfigureURL' as never);
-    }
-  }, [installationUrl, navigation, dispatch]);
+  }, [dispatch]);
 
   const onSubmit = async (data: FormData) => {
     const { email, password } = data;
@@ -110,10 +102,6 @@ const LoginScreen = () => {
 
   const openResetPassword = () => {
     navigation.navigate('ResetPassword' as never);
-  };
-
-  const openConfigInstallationURL = () => {
-    navigation.navigate('ConfigureURL' as never);
   };
 
   const onChangeLanguage = (locale: string) => {
@@ -160,12 +148,6 @@ const LoginScreen = () => {
           <View style={tailwind.style('pt-6 gap-4')}>
             <Animated.Text style={tailwind.style('text-2xl text-gray-950 font-inter-semibold-20')}>
               {i18n.t('LOGIN.TITLE')}
-            </Animated.Text>
-            <Animated.Text
-              style={tailwind.style(
-                'font-inter-normal-20 leading-[18px] tracking-[0.32px] text-gray-900',
-              )}>
-              {i18n.t('LOGIN.DESCRIPTION', { baseUrl })}
             </Animated.Text>
           </View>
 
@@ -285,13 +267,6 @@ const LoginScreen = () => {
             handlePress={handleSubmit(onSubmit)}
           />
 
-          <Pressable
-            style={tailwind.style('flex-row justify-center items-center mt-6')}
-            onPress={openConfigInstallationURL}>
-            <Animated.Text style={tailwind.style('text-sm text-gray-900')}>
-              {i18n.t('LOGIN.CHANGE_URL')}
-            </Animated.Text>
-          </Pressable>
           <Pressable
             style={tailwind.style('flex-row justify-center items-center mt-4')}
             onPress={() => languagesModalSheetRef.current?.present()}>
