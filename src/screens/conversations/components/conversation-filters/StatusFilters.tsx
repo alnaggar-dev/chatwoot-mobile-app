@@ -5,74 +5,78 @@ import { BottomSheetView } from '@gorhom/bottom-sheet';
 
 import { useRefsContext } from '@/context';
 import { selectFilters, setFilters } from '@/store/conversation/conversationFilterSlice';
-import { TickIcon } from '@/svg-icons';
 import { tailwind } from '@/theme';
-import { StatusCollection } from '@/types';
-import { getStatusTypeIcon, useHaptic } from '@/utils';
-import { BottomSheetHeader, Icon } from '@/components-next';
+import { AllStatusTypes } from '@/types';
+import { useHaptic } from '@/utils';
+import { BottomSheetHeader } from '@/components-next';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import i18n from '@/i18n';
 import { StatusOptions } from '@/types';
 
 type StatusCellProps = {
-  value: StatusCollection;
-  index: number;
+  value: AllStatusTypes;
 };
 
-export const status: StatusCollection[] = [
-  { id: 'all', icon: getStatusTypeIcon('all') },
-  { id: 'open', icon: getStatusTypeIcon('open') },
-  { id: 'pending', icon: getStatusTypeIcon('pending') },
-  { id: 'snoozed', icon: getStatusTypeIcon('snoozed') },
-  { id: 'resolved', icon: getStatusTypeIcon('resolved') },
-];
+export const status: AllStatusTypes[] = ['all', 'open', 'pending', 'snoozed', 'resolved'];
+
+// The dot carries the status hue; "all" is not a status, so it stays label-only.
+const statusDotStyle: Partial<Record<AllStatusTypes, string>> = {
+  open: 'bg-status-open',
+  pending: 'bg-status-pending',
+  snoozed: 'bg-status-snoozed',
+  resolved: 'bg-status-resolved',
+};
 
 const StatusCell = (props: StatusCellProps) => {
   const { filtersModalSheetRef } = useRefsContext();
-  const { value, index } = props;
+  const { value } = props;
   const filters = useAppSelector(selectFilters);
   const dispatch = useAppDispatch();
   const hapticSelection = useHaptic();
 
+  const isActive = filters.status === value;
+  const dotStyle = statusDotStyle[value];
+
   const handleStatusPress = () => {
     hapticSelection?.();
-    dispatch(setFilters({ key: 'status', value: value.id }));
+    dispatch(setFilters({ key: 'status', value }));
     setTimeout(() => filtersModalSheetRef.current?.dismiss({ overshootClamping: true }), 1);
   };
 
   return (
-    <Pressable onPress={handleStatusPress} style={tailwind.style('flex flex-row items-center')}>
-      <Animated.View>
-        <Icon icon={value.icon} size={24} />
-      </Animated.View>
+    <Pressable style={tailwind.style('min-h-[44px] justify-center')} onPress={handleStatusPress}>
       <Animated.View
         style={tailwind.style(
-          'flex-1 ml-3 flex-row justify-between py-[11px] pr-3',
-          index !== status.length - 1 ? 'border-b-[1px] border-blackA-A3' : '',
+          'flex flex-row items-center py-1.5 px-3 rounded-full border',
+          isActive ? 'bg-brand-subtle border-brand-muted' : 'bg-surface-subtle border-outline-soft',
         )}>
+        {dotStyle ? (
+          <Animated.View style={tailwind.style('h-1.5 w-1.5 rounded-full mr-1.5', dotStyle)} />
+        ) : null}
         <Animated.Text
           style={tailwind.style(
-            'text-base text-gray-950 font-inter-420-20 leading-[21px] tracking-[0.16px] capitalize',
+            'text-cxs leading-[16px] tracking-[0.24px] capitalize',
+            isActive
+              ? 'font-inter-semibold-20 text-brand'
+              : 'font-inter-medium-24 text-ink-secondary',
           )}>
-          {i18n.t(`CONVERSATION.FILTERS.STATUS.OPTIONS.${StatusOptions[value.id].toUpperCase()}`)}
+          {i18n.t(`CONVERSATION.FILTERS.STATUS.OPTIONS.${StatusOptions[value].toUpperCase()}`)}
         </Animated.Text>
-        {filters.status === value.id ? <Icon icon={<TickIcon />} size={20} /> : null}
       </Animated.View>
     </Pressable>
   );
 };
 
 type StatusStackProps = {
-  statusList: StatusCollection[];
+  statusList: AllStatusTypes[];
 };
 
 const StatusStack = (props: StatusStackProps) => {
   const { statusList } = props;
-  const list = statusList;
   return (
-    <Animated.View style={tailwind.style('py-1 pl-3')}>
-      {list.map((value, index) => (
-        <StatusCell key={index} {...{ value, index }} />
+    <Animated.View style={tailwind.style('flex flex-row flex-wrap gap-2 px-4 pt-1 pb-4')}>
+      {statusList.map((value, index) => (
+        <StatusCell key={index} {...{ value }} />
       ))}
     </Animated.View>
   );

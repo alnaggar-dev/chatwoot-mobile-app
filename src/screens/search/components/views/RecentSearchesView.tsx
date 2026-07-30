@@ -27,7 +27,7 @@ export function RecentSearchesView({
         <Pressable onPress={onClear}>
           <Text
             style={tailwind.style(
-              'text-xs font-inter-medium-24 leading-[17px] tracking-[0.16px] text-blue-800',
+              'text-xs font-inter-medium-24 leading-[17px] tracking-[0.16px] text-brand',
             )}>
             {i18n.t('SEARCH.CLEAR_ALL')}
           </Text>

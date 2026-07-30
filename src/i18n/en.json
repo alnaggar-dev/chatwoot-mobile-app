@@ -511,6 +511,7 @@
     "NO_MACROS": "No macros found"
   },
   "SEARCH": {
+    "TITLE": "Search",
     "PLACEHOLDER": "Type 2 or more characters to search",
     "HINT": "Search by conversation id, email, phone number, messages for better search results.",
     "ALL_RESULTS": "All Results",

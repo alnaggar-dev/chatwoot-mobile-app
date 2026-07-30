@@ -27,27 +27,33 @@ export function SearchHeader({
     <>
       <StatusBar
         translucent
-        backgroundColor={tailwind.color('bg-white')}
+        backgroundColor={tailwind.color('bg-surface')}
         barStyle={'dark-content'}
       />
-      <Animated.View style={tailwind.style('pt-2 pb-[12px] border-b border-b-blackA-A3')}>
-        <Animated.View style={tailwind.style('flex flex-row items-center gap-2 pl-4 pr-2')}>
+      <Animated.View style={tailwind.style('pt-2 pb-3 border-b-[1px] border-b-blackA-A3')}>
+        <Animated.View style={tailwind.style('flex flex-row items-center px-4')}>
           <Pressable
-            hitSlop={8}
-            style={tailwind.style('h-6 w-6 flex justify-center items-start')}
+            hitSlop={16}
+            style={tailwind.style('h-8 w-8 flex justify-center items-start')}
             onPress={onBackPress}>
             <Icon icon={<ChevronLeft />} size={24} />
           </Pressable>
-          <Animated.View style={tailwind.style('flex-1')}>
-            <SearchBar
-              placeholder={i18n.t('SEARCH.PLACEHOLDER')}
-              autoFocus
-              value={searchText}
-              onChangeText={onSearchChange}
-              isLoading={isLoading}
-              onClear={onClear}
-            />
-          </Animated.View>
+        </Animated.View>
+        <Animated.Text
+          numberOfLines={1}
+          style={tailwind.style('px-4 pt-1 text-3xl font-inter-semibold-20 text-ink')}>
+          {i18n.t('SEARCH.TITLE')}
+        </Animated.Text>
+        {/* SearchBar carries its own px-3, so px-1 lands the field on the px-4 grid. */}
+        <Animated.View style={tailwind.style('px-1 pt-3')}>
+          <SearchBar
+            placeholder={i18n.t('SEARCH.PLACEHOLDER')}
+            autoFocus
+            value={searchText}
+            onChangeText={onSearchChange}
+            isLoading={isLoading}
+            onClear={onClear}
+          />
         </Animated.View>
       </Animated.View>
     </>

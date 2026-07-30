@@ -39,10 +39,15 @@ export const FilterBar = ({ allFilters, selectedFilters, onFilterPress }: Filter
     );
   };
 
+  // A chip is active once the filter has been narrowed away from its declared default.
+  const isFilterActive = (value: BaseFilterOption) =>
+    value.options[selectedFilters[value.type] as keyof typeof value.options] !==
+    value.defaultFilter;
+
   return (
     <Animated.View
       exiting={exiting}
-      style={tailwind.style('px-3 pt-2 pb-1.5 h-[46px] flex flex-row')}>
+      style={tailwind.style('px-3 h-[50px] flex flex-row items-center')}>
       {allFilters.map((value, index) => {
         if (value.type === 'inbox_id') {
           return (
@@ -52,6 +57,7 @@ export const FilterBar = ({ allFilters, selectedFilters, onFilterPress }: Filter
               style={tailwind.style('pr-2')}>
               <FilterButton
                 handleOnPress={() => onFilterPress(value.type)}
+                isActive={isFilterActive(value)}
                 value={value.options[selectedFilters[value.type] as keyof typeof value.options]}
               />
             </Animated.View>
@@ -64,6 +70,7 @@ export const FilterBar = ({ allFilters, selectedFilters, onFilterPress }: Filter
             style={tailwind.style('pr-2')}>
             <FilterButton
               handleOnPress={() => onFilterPress(value.type)}
+              isActive={isFilterActive(value)}
               value={getFilterTitle(value)}
             />
           </Animated.View>

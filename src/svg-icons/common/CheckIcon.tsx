@@ -1,9 +1,11 @@
 import React from 'react';
 import { Path, Svg } from 'react-native-svg';
 
+import { tailwind } from '@/theme';
+
 import { IconProps } from '../../types';
 
-export const CheckIcon = ({ stroke = '#0081F1' }: IconProps): JSX.Element => {
+export const CheckIcon = ({ stroke = tailwind.color('bg-brand') }: IconProps): JSX.Element => {
   return (
     <Svg width="100%" height="100%" viewBox="0 0 20 20" fill="none">
       <Path

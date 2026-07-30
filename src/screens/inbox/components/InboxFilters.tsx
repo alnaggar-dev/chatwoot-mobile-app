@@ -3,10 +3,9 @@ import { Pressable } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { useRefsContext } from '@/context';
-import { TickIcon } from '@/svg-icons';
 import { tailwind } from '@/theme';
 import { useHaptic } from '@/utils';
-import { BottomSheetHeader, Icon } from '@/components-next';
+import { BottomSheetHeader } from '@/components-next';
 import i18n from '@/i18n';
 import { InboxSortTypes, InboxSortOptions } from '@/store/notification/notificationTypes';
 import { selectSortOrder, setFilters } from '@/store/notification/notificationFilterSlice';
@@ -14,7 +13,6 @@ import { useAppDispatch, useAppSelector } from '@/hooks';
 
 type SortByCellProps = {
   value: string;
-  index: number;
   onChange: (value: InboxSortTypes) => void;
   sortOrder: InboxSortTypes;
 };
@@ -22,9 +20,11 @@ type SortByCellProps = {
 const sortByList = Object.keys(InboxSortOptions) as InboxSortTypes[];
 
 const SortByCell = (props: SortByCellProps) => {
-  const { value, index, sortOrder, onChange } = props;
+  const { value, sortOrder, onChange } = props;
 
   const hapticSelection = useHaptic();
+
+  const isActive = sortOrder === value;
 
   const handlePreferredSortPress = () => {
     hapticSelection?.();
@@ -33,20 +33,22 @@ const SortByCell = (props: SortByCellProps) => {
 
   return (
     <Pressable
-      onPress={handlePreferredSortPress}
-      style={tailwind.style('flex flex-row items-center')}>
+      style={tailwind.style('min-h-[44px] justify-center')}
+      onPress={handlePreferredSortPress}>
       <Animated.View
         style={tailwind.style(
-          'flex-1 ml-3 flex-row justify-between py-[11px] pr-3',
-          index !== 1 ? 'border-b-[1px] border-blackA-A3' : '',
+          'flex flex-row items-center py-1.5 px-3 rounded-full border',
+          isActive ? 'bg-brand-subtle border-brand-muted' : 'bg-surface-subtle border-outline-soft',
         )}>
         <Animated.Text
           style={tailwind.style(
-            'text-base text-gray-950 font-inter-420-20 leading-[21px] tracking-[0.16px] capitalize',
+            'text-cxs leading-[16px] tracking-[0.24px] capitalize',
+            isActive
+              ? 'font-inter-semibold-20 text-brand'
+              : 'font-inter-medium-24 text-ink-secondary',
           )}>
           {i18n.t(`NOTIFICATION.FILTERS.SORT_BY.OPTIONS.${value.toUpperCase()}`)}
         </Animated.Text>
-        {sortOrder === value ? <Icon icon={<TickIcon />} size={20} /> : null}
       </Animated.View>
     </Pressable>
   );
@@ -65,11 +67,11 @@ export const InboxFilters = () => {
   return (
     <Animated.View>
       <BottomSheetHeader headerText={i18n.t('CONVERSATION.FILTERS.SORT_BY.TITLE')} />
-      <Animated.View style={tailwind.style('py-1 pl-3')}>
+      <Animated.View style={tailwind.style('flex flex-row flex-wrap gap-2 px-4 pt-1 pb-4')}>
         {sortByList.map((value, index) => (
           <SortByCell
             key={index}
-            {...{ value, index }}
+            {...{ value }}
             sortOrder={sortOrder}
             onChange={handleChangeFilters}
           />

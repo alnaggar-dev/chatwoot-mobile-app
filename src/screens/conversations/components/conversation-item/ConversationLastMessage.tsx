@@ -19,6 +19,7 @@ import { getPlainText } from '@/utils/messageFormatterUtils';
 type ConversationLastMessageProps = {
   numberOfLines: number;
   lastMessage: Message;
+  isUnread?: boolean;
 };
 
 export const ATTACHMENT_ICONS = {
@@ -29,6 +30,14 @@ export const ATTACHMENT_ICONS = {
   location: 'location',
   fallback: 'link',
 };
+
+// One preview style for every message shape. Unread steps up weight and
+// contrast rather than introducing another colour into the row.
+const previewTextStyle = (isUnread: boolean) =>
+  tailwind.style(
+    'text-md flex-1 leading-[20px]',
+    isUnread ? 'font-inter-medium-24 text-ink' : 'font-inter-normal-20 text-ink-secondary',
+  );
 
 const getAttachmentIcon = (fileType: string) => {
   switch (fileType) {
@@ -64,9 +73,11 @@ const MessageType = ({ message, style }: { message: Message; style?: StyleProp<V
 const MessageContent = ({
   message,
   numberOfLines,
+  isUnread,
 }: {
   message: Message;
   numberOfLines: number;
+  isUnread: boolean;
 }) => {
   const { contentAttributes } = message || {};
   const { email: { subject = '' } = {} } = contentAttributes || {};
@@ -81,11 +92,7 @@ const MessageContent = ({
     return (
       <NativeView style={tailwind.style('flex-row gap-1 items-center')}>
         <Icon icon={<ImageAttachmentIcon />} />
-        <Text
-          numberOfLines={1}
-          style={tailwind.style(
-            'text-md flex-1 font-inter-420-20 tracking-[0.32px] leading-[21px] text-gray-900',
-          )}>
+        <Text numberOfLines={1} style={previewTextStyle(isUnread)}>
           <MessageType message={message} style={tailwind.style('ml-1')} />
           {i18n.t(`CONVERSATION.ATTACHMENTS.image.CONTENT`)}
         </Text>
@@ -94,17 +101,9 @@ const MessageContent = ({
   } else if (lastMessageContent) {
     return (
       <NativeView style={tailwind.style('flex-row gap-1 items-center')}>
-        <Text
-          numberOfLines={numberOfLines}
-          style={tailwind.style(
-            'text-md flex-1 font-inter-420-20 tracking-[0.3px] leading-[21px] text-gray-900',
-          )}>
+        <Text numberOfLines={numberOfLines} style={previewTextStyle(isUnread)}>
           <MessageType message={message} style={tailwind.style('ml-1')} />
-          <Text
-            numberOfLines={numberOfLines}
-            style={tailwind.style(
-              'text-md flex-1 font-inter-420-20 tracking-[0.3px] leading-[21px] text-gray-900',
-            )}>
+          <Text numberOfLines={numberOfLines} style={previewTextStyle(isUnread)}>
             {lastMessageContent}
           </Text>
         </Text>
@@ -115,31 +114,20 @@ const MessageContent = ({
       <NativeView style={tailwind.style('flex-row gap-1 items-center')}>
         <Icon icon={getAttachmentIcon(lastMessageFileType)} />
         <MessageType message={message} />
-        <Text
-          numberOfLines={1}
-          style={tailwind.style(
-            'text-md flex-1 font-inter-420-20 tracking-[0.32px] leading-[21px] text-gray-900',
-          )}>
+        <Text numberOfLines={1} style={previewTextStyle(isUnread)}>
           {i18n.t(`CONVERSATION.ATTACHMENTS.${lastMessageFileType}.CONTENT`)}
         </Text>
       </NativeView>
     );
   }
-  return (
-    <Text
-      style={tailwind.style(
-        'text-md flex-1 font-inter-420-20 tracking-[0.32px] leading-[21px] text-gray-900',
-      )}>
-      {i18n.t('CONVERSATION.NO_CONTENT')}
-    </Text>
-  );
+  return <Text style={previewTextStyle(isUnread)}>{i18n.t('CONVERSATION.NO_CONTENT')}</Text>;
 };
 
 export const ConversationLastMessage = (props: ConversationLastMessageProps) => {
-  const { numberOfLines, lastMessage } = props;
+  const { numberOfLines, lastMessage, isUnread = false } = props;
   return (
     <NativeView style={tailwind.style('flex-1 flex-row gap-1 items-start')}>
-      <MessageContent message={lastMessage} numberOfLines={numberOfLines} />
+      <MessageContent message={lastMessage} numberOfLines={numberOfLines} isUnread={isUnread} />
     </NativeView>
   );
 };

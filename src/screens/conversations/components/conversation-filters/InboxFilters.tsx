@@ -4,7 +4,6 @@ import Animated from 'react-native-reanimated';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 import { useRefsContext } from '@/context';
-import { TickIcon } from '@/svg-icons';
 import { tailwind } from '@/theme';
 import { useHaptic } from '@/utils';
 import { BottomSheetHeader, Icon } from '@/components-next/common';
@@ -17,16 +16,17 @@ import i18n from '@/i18n';
 
 type InboxCellProps = {
   value: { id: number; name: string; channelType: Channel; medium: string };
-  isLastItem: boolean;
 };
 
 const InboxCell = (props: InboxCellProps) => {
   const { filtersModalSheetRef } = useRefsContext();
   const dispatch = useAppDispatch();
-  const { value, isLastItem } = props;
+  const { value } = props;
 
   const filters = useAppSelector(selectFilters);
   const hapticSelection = useHaptic();
+
+  const isActive = filters.inbox_id === value.id.toString();
 
   const handlePreferredAssigneeTypePress = () => {
     hapticSelection?.();
@@ -36,28 +36,27 @@ const InboxCell = (props: InboxCellProps) => {
 
   return (
     <Pressable
-      onPress={handlePreferredAssigneeTypePress}
-      style={tailwind.style('flex flex-row items-center')}>
+      style={tailwind.style('min-h-[44px] justify-center')}
+      onPress={handlePreferredAssigneeTypePress}>
       <Animated.View
         style={tailwind.style(
-          'flex-1 ml-3 flex-row justify-between py-[11px] pr-3',
-          !isLastItem ? 'border-b-[1px] border-blackA-A3' : '',
+          'flex flex-row items-center py-1.5 px-3 rounded-full border',
+          isActive ? 'bg-brand-subtle border-brand-muted' : 'bg-surface-subtle border-outline-soft',
         )}>
-        <Animated.View style={tailwind.style('flex-row items-center')}>
-          <Icon
-            icon={getChannelIcon(value.channelType, value.medium, '')}
-            size={18}
-            style={tailwind.style('my-auto flex items-center justify-center')}
-          />
-
-          <Animated.Text
-            style={tailwind.style(
-              'text-base text-gray-950 font-inter-420-20 leading-[21px] tracking-[0.16px] capitalize ml-2',
-            )}>
-            {value.name}
-          </Animated.Text>
-        </Animated.View>
-        {filters.inbox_id === value.id.toString() ? <Icon icon={<TickIcon />} size={20} /> : null}
+        <Icon
+          icon={getChannelIcon(value.channelType, value.medium, '')}
+          size={14}
+          style={tailwind.style('mr-1.5 flex items-center justify-center')}
+        />
+        <Animated.Text
+          style={tailwind.style(
+            'text-cxs leading-[16px] tracking-[0.24px] capitalize',
+            isActive
+              ? 'font-inter-semibold-20 text-brand'
+              : 'font-inter-medium-24 text-ink-secondary',
+          )}>
+          {value.name}
+        </Animated.Text>
       </Animated.View>
     </Pressable>
   );
@@ -89,15 +88,12 @@ export const InboxFilters = () => {
       contentContainerStyle={tailwind.style('pb-4')}
       stickyHeaderIndices={[0]}
       showsVerticalScrollIndicator={true}>
-      <Animated.View style={tailwind.style('bg-white pb-3')}>
+      <Animated.View style={tailwind.style('bg-surface pb-3')}>
         <BottomSheetHeader headerText={i18n.t('CONVERSATION.FILTERS.INBOX.TITLE')} />
       </Animated.View>
-      <Animated.View style={tailwind.style('pl-3')}>
+      <Animated.View style={tailwind.style('flex flex-row flex-wrap gap-2 px-4 pt-1')}>
         {inboxList.map((value, index) => (
-          <InboxCell
-            key={index}
-            {...{ value, index, isLastItem: index === inboxList.length - 1 }}
-          />
+          <InboxCell key={index} {...{ value }} />
         ))}
       </Animated.View>
     </BottomSheetScrollView>

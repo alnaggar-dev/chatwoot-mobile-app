@@ -16,8 +16,8 @@ type ButtonProps = {
 };
 
 const getButtonStyles = (isPrimary: boolean, pressed: boolean) => {
-  const baseStyles = 'py-[11px] flex-row items-center justify-center rounded-[13px] gap-4';
-  const variantStyles = isPrimary ? 'bg-blue-800' : 'bg-gray-50';
+  const baseStyles = 'py-[11px] flex-row items-center justify-center rounded-control gap-4';
+  const variantStyles = isPrimary ? 'bg-brand' : 'bg-gray-50';
   const pressedStyles = isPrimary ? 'opacity-95' : pressed ? 'bg-gray-100' : '';
 
   return tailwind.style(baseStyles, variantStyles, pressedStyles);
@@ -28,10 +28,10 @@ const getTextStyles = (isPrimary: boolean, isDestructive: boolean) => {
   const colorStyles = isPrimary
     ? isDestructive
       ? 'text-tomato-800'
-      : 'text-blue-800'
+      : 'text-brand'
     : isDestructive
       ? 'text-ruby-800'
-      : 'text-blue-800';
+      : 'text-brand';
 
   return tailwind.style(baseStyles, colorStyles);
 };
@@ -65,10 +65,7 @@ export const IconButton = ({
         accessibilityState={{ disabled }}
         style={({ pressed }) => getButtonStyles(isPrimary, pressed)}
         {...handlers}>
-        <Icon
-          icon={<PhoneIcon strokeWidth={2} stroke={tailwind.color('bg-blue-800')} />}
-          size={24}
-        />
+        <Icon icon={<PhoneIcon strokeWidth={2} stroke={tailwind.color('bg-brand')} />} size={24} />
         <Animated.Text style={getTextStyles(isPrimary, isDestructive)}>{text}</Animated.Text>
       </Pressable>
     </Animated.View>

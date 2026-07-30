@@ -1,14 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
 import { tailwind } from '@/theme';
-import { NativeView } from '@/components-next/native-components';
 import { formatTimeToShortForm, formatRelativeTime } from '@/utils/dateTimeUtils';
 
 // Constants from Vue component
 const MINUTE_IN_MS = 60000;
 const HOUR_IN_MS = MINUTE_IN_MS * 60;
 const DAY_IN_MS = HOUR_IN_MS * 24;
+
+const styles = StyleSheet.create({
+  // Fixed digit advance width, so a ticking timestamp never nudges the row it
+  // is right-aligned in.
+  tabularNums: { fontVariant: ['tabular-nums'] },
+});
 
 type LastActivityTimeProps = {
   timestamp: number;
@@ -42,13 +47,9 @@ export const LastActivityTime = ({ timestamp }: LastActivityTimeProps) => {
   }, []);
 
   return (
-    <NativeView>
-      <Text
-        style={tailwind.style(
-          'text-sm font-inter-420-20 leading-[16px] tracking-[0.32px] text-gray-700',
-        )}>
-        {lastActivityTime}
-      </Text>
-    </NativeView>
+    <Text
+      style={[tailwind.style('text-xs font-inter-normal-20 text-ink-muted'), styles.tabularNums]}>
+      {lastActivityTime}
+    </Text>
   );
 };

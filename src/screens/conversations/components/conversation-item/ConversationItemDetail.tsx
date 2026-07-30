@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
-import React, { memo, useState } from 'react';
-import { Dimensions, ImageURISource, Text } from 'react-native';
+import React, { Fragment, memo, useState } from 'react';
+import { ImageURISource, Text } from 'react-native';
 import { LinearTransition } from 'react-native-reanimated';
 import { isEqual } from 'lodash';
 
@@ -19,8 +19,6 @@ import { LastActivityTime } from './LastActivityTime';
 import { SLA } from '@/types/common/SLA';
 import { Inbox } from '@/types/Inbox';
 import { TypingMessage } from './TypingMessage';
-
-const { width } = Dimensions.get('screen');
 
 type ConversationDetailSubCellProps = Pick<
   Conversation,
@@ -79,108 +77,99 @@ export const ConversationItemDetail = memo((props: ConversationDetailSubCellProp
 
   const hasSLA = !!slaPolicyId && shouldShowSLA;
 
+  const isUnread = unreadCount >= 1;
+
   if (!lastMessage) {
     return null;
   }
 
+  // Every annotation that used to compete with the sender name and the preview
+  // collapses into a single quiet tier, anchored by the conversation id.
+  const metaItems = [
+    <ConversationId key="id" id={conversationId} />,
+    hasPriority ? <PriorityIndicator key="priority" {...{ priority }} /> : null,
+    hasLabels ? <LabelIndicator key="labels" labels={labels} allLabels={allLabels} /> : null,
+    inbox ? (
+      <ChannelIndicator key="channel" inbox={inbox} additionalAttributes={additionalAttributes} />
+    ) : null,
+    hasSLA ? (
+      <SLAIndicator
+        key="sla"
+        slaPolicyId={slaPolicyId}
+        appliedSla={appliedSla as SLA}
+        appliedSlaConversationDetails={
+          appliedSlaConversationDetails as {
+            firstReplyCreatedAt: number;
+            waitingSince: number;
+            status: string;
+          }
+        }
+        onSLAStatusChange={setShouldShowSLA}
+      />
+    ) : null,
+  ].filter((item): item is React.ReactElement => item !== null);
+
+  // The preview earns a second line only when nothing but the id shares the
+  // meta tier with it, which keeps the row height stable down the list.
+  const previewLines = metaItems.length > 1 ? 1 : 2;
+
   return (
     <AnimatedNativeView
       layout={LinearTransition.springify().damping(28).stiffness(200)}
-      style={tailwind.style('flex-1 gap-1 py-3 border-b-[1px] border-b-blackA-A3')}>
-      <AnimatedNativeView
-        style={tailwind.style('flex flex-row justify-between items-center h-[24px]')}>
-        <AnimatedNativeView style={tailwind.style('flex flex-row items-center h-[24px] gap-[5px]')}>
-          <Text
-            numberOfLines={1}
-            style={tailwind.style(
-              'text-base font-inter-medium-24 tracking-[0.24px] text-gray-950 capitalize',
-              // Calculated based on the widths of other content,
-              // We might have to do a 10-20px offset based on the max width of the timestamp
-              `max-w-[${width - 250}px]`,
-            )}>
-            {senderName}
-          </Text>
-          <ConversationId id={conversationId} />
-        </AnimatedNativeView>
-        <AnimatedNativeView style={tailwind.style('flex flex-row items-center gap-2')}>
-          {hasPriority ? <PriorityIndicator {...{ priority }} /> : null}
-          {inbox && <ChannelIndicator inbox={inbox} additionalAttributes={additionalAttributes} />}
-          <LastActivityTime timestamp={timestamp} />
-        </AnimatedNativeView>
+      style={tailwind.style('flex-1 gap-0.5 py-2 border-b-[1px] border-b-blackA-A3')}>
+      <AnimatedNativeView style={tailwind.style('flex-row items-center gap-2 min-h-[20px]')}>
+        <Text
+          numberOfLines={1}
+          style={tailwind.style(
+            'flex-1 min-w-0 text-base leading-5 font-inter-semibold-20 text-ink capitalize',
+          )}>
+          {senderName}
+        </Text>
+        <LastActivityTime timestamp={timestamp} />
       </AnimatedNativeView>
-      {hasLabels || hasSLA ? (
-        <AnimatedNativeView style={tailwind.style('flex flex-col items-center gap-1')}>
-          <AnimatedNativeView
-            style={tailwind.style('flex flex-row w-full justify-between items-center gap-2')}>
-            {typingText ? (
-              <TypingMessage typingText={typingText} />
-            ) : (
-              <ConversationLastMessage numberOfLines={1} lastMessage={lastMessage as Message} />
-            )}
 
-            {unreadCount >= 1 && (
-              <NativeView style={tailwind.style('flex-shrink-0')}>
-                <UnreadIndicator count={unreadCount} />
-              </NativeView>
-            )}
-          </AnimatedNativeView>
-          <AnimatedNativeView
-            style={tailwind.style('flex flex-row h-6 justify-between items-center gap-2')}>
-            <AnimatedNativeView style={tailwind.style('flex flex-row flex-1 gap-2 items-center')}>
-              {hasSLA && (
-                <SLAIndicator
-                  slaPolicyId={slaPolicyId}
-                  appliedSla={appliedSla as SLA}
-                  appliedSlaConversationDetails={
-                    appliedSlaConversationDetails as {
-                      firstReplyCreatedAt: number;
-                      waitingSince: number;
-                      status: string;
-                    }
-                  }
-                  onSLAStatusChange={setShouldShowSLA}
-                />
+      <AnimatedNativeView style={tailwind.style('flex-row items-center gap-2 min-h-[20px]')}>
+        {typingText ? (
+          <TypingMessage typingText={typingText} />
+        ) : (
+          <ConversationLastMessage
+            numberOfLines={previewLines}
+            lastMessage={lastMessage as Message}
+            isUnread={isUnread}
+          />
+        )}
+
+        {isUnread && (
+          <NativeView style={tailwind.style('flex-shrink-0')}>
+            <UnreadIndicator count={unreadCount} />
+          </NativeView>
+        )}
+      </AnimatedNativeView>
+
+      <AnimatedNativeView
+        style={tailwind.style('flex-row items-center justify-between gap-2 min-h-[20px]')}>
+        <AnimatedNativeView
+          style={tailwind.style('flex-1 flex-row items-center gap-1 overflow-hidden')}>
+          {metaItems.map((item, index) => (
+            <Fragment key={item.key}>
+              {index > 0 && (
+                <Text style={tailwind.style('text-xs font-inter-normal-20 text-ink-muted')}>
+                  {'\u00B7'}
+                </Text>
               )}
-              {hasLabels && hasSLA && (
-                <NativeView style={tailwind.style('w-[1px] h-3 bg-slate-500')} />
-              )}
-              {hasLabels && <LabelIndicator labels={labels} allLabels={allLabels} />}
-            </AnimatedNativeView>
-
-            {assignee ? (
-              <AnimatedNativeView>
-                <Avatar
-                  size="sm"
-                  name={assignee.name as string}
-                  src={{ uri: assignee.thumbnail } as ImageURISource}
-                />
-              </AnimatedNativeView>
-            ) : null}
-          </AnimatedNativeView>
+              {item}
+            </Fragment>
+          ))}
         </AnimatedNativeView>
-      ) : (
-        <AnimatedNativeView style={tailwind.style('flex flex-row items-end gap-2')}>
-          {typingText ? (
-            <TypingMessage typingText={typingText} />
-          ) : (
-            <ConversationLastMessage numberOfLines={2} lastMessage={lastMessage as Message} />
-          )}
 
-          <AnimatedNativeView style={tailwind.style('flex flex-row items-end gap-1')}>
-            {assignee ? (
-              <NativeView style={tailwind.style(unreadCount >= 1 ? 'pr-1' : '')}>
-                <Avatar
-                  size="sm"
-                  name={assignee.name as string}
-                  src={{ uri: assignee.thumbnail } as ImageURISource}
-                />
-              </NativeView>
-            ) : null}
-
-            {unreadCount >= 1 && <UnreadIndicator count={unreadCount} />}
-          </AnimatedNativeView>
-        </AnimatedNativeView>
-      )}
+        {assignee ? (
+          <Avatar
+            size="sm"
+            name={assignee.name as string}
+            src={{ uri: assignee.thumbnail } as ImageURISource}
+          />
+        ) : null}
+      </AnimatedNativeView>
     </AnimatedNativeView>
   );
 }, checkIfPropsAreSame);

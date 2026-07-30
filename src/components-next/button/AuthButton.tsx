@@ -23,8 +23,8 @@ export const AuthButton = ({
   style,
 }: AuthButtonProps) => {
   const getButtonStyles = () => {
-    const baseStyles = 'py-[11px] flex-row items-center justify-center rounded-[13px]';
-    const variantStyles = variant === 'filled' ? 'bg-blue-800' : 'bg-gray-50';
+    const baseStyles = 'py-[11px] flex-row items-center justify-center rounded-control';
+    const variantStyles = variant === 'filled' ? 'bg-brand' : 'bg-gray-50';
     const disabledStyles = disabled ? 'opacity-50' : '';
 
     return tailwind.style(baseStyles, variantStyles, disabledStyles);

@@ -102,8 +102,8 @@ export const Basic: Story = {
   render: args => <SliderWithState {...args} />,
   args: {
     trackColor: 'bg-gray-500',
-    filledTrackColor: 'bg-blue-700',
-    knobStyle: 'border-blue-700',
+    filledTrackColor: 'bg-brand',
+    knobStyle: 'border-brand',
   },
 };
 
@@ -111,8 +111,8 @@ export const HalfwayProgress: Story = {
   render: args => <HalfwayProgressSlider {...args} />,
   args: {
     trackColor: 'bg-gray-500',
-    filledTrackColor: 'bg-blue-700',
-    knobStyle: 'border-blue-700',
+    filledTrackColor: 'bg-brand',
+    knobStyle: 'border-brand',
   },
   parameters: {
     docs: {

@@ -158,7 +158,7 @@ export const UpdateAssignee = () => {
                   <Animated.Text
                     style={[
                       tailwind.style(
-                        'text-base text-blue-800 font-inter-420-20 leading-[21px] tracking-[0.16px]',
+                        'text-base text-brand font-inter-420-20 leading-[21px] tracking-[0.16px]',
                       ),
                     ]}>
                     {i18n.t('CONVERSATION.SELF_ASSIGN')}

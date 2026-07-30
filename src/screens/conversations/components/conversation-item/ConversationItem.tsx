@@ -85,7 +85,7 @@ export const ConversationItem = memo(
   }: ConversationItemProps) => {
     return (
       <NativeView style={tailwind.style('px-3 gap-3 flex-row justify-between')}>
-        <NativeView style={tailwind.style('py-3 flex flex-row')}>
+        <NativeView style={tailwind.style('py-2 flex flex-row')}>
           <ConversationSelect {...{ isSelected, currentState }} />
           <ConversationAvatar
             src={{ uri: senderThumbnail } as ImageURISource}

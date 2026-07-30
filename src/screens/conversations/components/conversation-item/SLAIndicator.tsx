@@ -79,13 +79,18 @@ export const SLAIndicator = ({
     return i18n.t(`SLA.${upperCaseType}`);
   };
 
+  const isSlaMissed = !!slaStatus?.isSlaMissed;
+
   return (
-    <NativeView style={tailwind.style('flex flex-row justify-center items-center')}>
-      <SlaMissedIcon color={slaStatus?.isSlaMissed ? '#E13D45' : '#BBBBBB'} />
+    <NativeView style={tailwind.style('flex-row items-center gap-1 flex-shrink')}>
+      {/* A missed SLA is the one alarming element the row is allowed; an
+          on-track one stays plain text in the quiet meta tier. */}
+      {isSlaMissed && <SlaMissedIcon color={tailwind.color('text-ruby-800') as string} />}
       <Text
+        numberOfLines={1}
         style={tailwind.style(
-          'pl-1 text-sm leading-[20px] text-center',
-          slaStatus?.isSlaMissed ? 'text-ruby-800' : 'text-gray-800',
+          'text-xs font-inter-normal-20 flex-shrink',
+          isSlaMissed ? 'text-ruby-800' : 'text-ink-muted',
         )}>
         {`${sLAStatusText()}: ${slaStatus?.threshold}`}
       </Text>

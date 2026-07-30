@@ -107,13 +107,13 @@ export const LabelActions = (props: LabelActionsProps) => {
             styles.labelShadow,
             tailwind.style(
               'flex flex-row items-center bg-white px-3 py-[7px] rounded-lg mr-2 mt-3',
-              pressed ? 'bg-blue-100' : '',
+              pressed ? 'bg-brand-subtle' : '',
             ),
           ]}>
           <Icon icon={<LabelTag />} size={16} />
           <Animated.Text
             style={tailwind.style(
-              'text-md font-inter-medium-24 leading-[17px] tracking-[0.24px] pl-1.5 text-blue-800',
+              'text-md font-inter-medium-24 leading-[17px] tracking-[0.24px] pl-1.5 text-brand',
             )}>
             {addLabelText}
           </Animated.Text>

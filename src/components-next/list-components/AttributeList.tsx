@@ -82,7 +82,7 @@ const AttributeItem = (props: AttributeItemProps) => {
               style={tailwind.style(
                 'text-base font-inter-normal-20 leading-[22px] tracking-[0.16px] overflow-hidden',
                 listItem.subtitleType === 'light' ? 'text-gray-900' : 'text-gray-950',
-                listItem.type === 'link' ? 'text-blue-800 underline' : '',
+                listItem.type === 'link' ? 'text-link underline' : '',
               )}>
               {formattedValue}
             </Animated.Text>

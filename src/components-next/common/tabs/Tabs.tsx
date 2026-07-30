@@ -112,7 +112,7 @@ export const Tabs = ({ items, activeTabId, onTabPress }: TabsProps) => {
                 <Text
                   style={tailwind.style(
                     'text-sm font-medium',
-                    isActive ? 'text-blue-800' : 'text-gray-800',
+                    isActive ? 'text-brand' : 'text-gray-800',
                   )}>
                   {item.label}
                   {!!item.count && ` (${item.count})`}

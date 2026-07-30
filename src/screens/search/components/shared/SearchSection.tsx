@@ -72,7 +72,8 @@ export function SearchSection({
   const section = getSearchSectionById(sectionId);
   if (!section) return null;
 
-  const shouldShowSection = activeTab === 'all' || items.length > 0 || isInitialLoading || hasError || isCancelled;
+  const shouldShowSection =
+    activeTab === 'all' || items.length > 0 || isInitialLoading || hasError || isCancelled;
   if (!shouldShowSection) {
     return null;
   }
@@ -119,7 +120,7 @@ export function SearchSection({
             <Pressable onPress={handleViewMorePress}>
               <Animated.Text
                 style={tailwind.style(
-                  'text-xs font-inter-420-20 leading-[17px] tracking-[0.16px] text-blue-800',
+                  'text-xs font-inter-420-20 leading-[17px] tracking-[0.16px] text-brand',
                 )}>
                 {i18n.t('SEARCH.VIEW_MORE')}
               </Animated.Text>

@@ -45,7 +45,7 @@ export const HighlightedText = ({
         <Text
           key={index}
           style={
-            segment.isHighlight ? tailwind.style('font-inter-medium-24 text-blue-800') : undefined
+            segment.isHighlight ? tailwind.style('font-inter-medium-24 text-brand') : undefined
           }>
           {segment.text}
         </Text>

@@ -322,9 +322,7 @@ const SettingsScreen = () => {
         <Pressable
           style={tailwind.style('p-4 items-center')}
           onLongPress={() => debugActionsSheetRef.current?.present()}>
-          <Text style={tailwind.style('text-sm text-gray-700 ')}>
-            {`${foxDeskInstance} ${appVersionDetails}`}
-          </Text>
+          <Text style={tailwind.style('text-sm text-gray-700 ')}>{foxDeskInstance}</Text>
         </Pressable>
       </Animated.ScrollView>
       <BottomSheetModal

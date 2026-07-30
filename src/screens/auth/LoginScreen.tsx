@@ -275,7 +275,7 @@ const LoginScreen = () => {
           />
 
           <Pressable style={tailwind.style('pt-1 mb-8')} onPress={openResetPassword}>
-            <Animated.Text style={tailwind.style('text-blue-800 font-inter-medium-24 text-right')}>
+            <Animated.Text style={tailwind.style('text-link font-inter-medium-24 text-right')}>
               {i18n.t('LOGIN.FORGOT_PASSWORD')}
             </Animated.Text>
           </Pressable>

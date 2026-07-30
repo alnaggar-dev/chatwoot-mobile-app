@@ -2,7 +2,6 @@ import { View } from 'react-native';
 import type { Meta, StoryObj } from '@storybook/react';
 
 import { FilterButton as FilterButtonComponent } from '../FilterButton';
-import { ConversationFilterOptions } from './FilterBarMockData';
 
 const meta = {
   title: 'Filters',
@@ -22,12 +21,16 @@ type Story = StoryObj<typeof meta>;
 
 export const FilterButton: Story = {
   args: {
-    allFilters: ConversationFilterOptions[0],
-    selectedFilters: {
-      assignee_type: 'me',
-      status: 'open',
-      sort_by: 'latest',
-    },
+    value: 'Open',
+    isActive: false,
+    handleOnPress: () => {},
+  },
+};
+
+export const FilterButtonActive: Story = {
+  args: {
+    value: 'Open',
+    isActive: true,
     handleOnPress: () => {},
   },
 };
