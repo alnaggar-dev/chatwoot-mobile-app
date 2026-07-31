@@ -39,6 +39,7 @@ import {
   SettingsList,
 } from '@/components-next';
 import { UserAvatar } from './components/UserAvatar';
+import { AccountDeletion } from './components/AccountDeletion';
 
 import { LANGUAGES, TAB_BAR_HEIGHT } from '@/constants';
 import { useRefsContext } from '@/context';
@@ -128,9 +129,11 @@ const SettingsScreen = () => {
 
   const accounts = useSelector(selectAccounts) || [];
 
-  const activeAccountName = accounts.length
-    ? accounts.find((account: Account) => account.id === activeAccountId)?.name || ''
-    : '';
+  const activeAccount = accounts.find((account: Account) => account.id === activeAccountId);
+
+  const activeAccountName = activeAccount?.name || '';
+
+  const canDeleteAccount = isFoxDeskCloud && activeAccount?.role === 'administrator';
 
   const enableAccountSwitch = accounts.length > 1;
 
@@ -311,6 +314,17 @@ const SettingsScreen = () => {
         <Animated.View style={tailwind.style('pt-6')}>
           <SettingsList sectionTitle={i18n.t('SETTINGS.SUPPORT')} list={supportList} />
         </Animated.View>
+        {canDeleteAccount && activeAccount ? (
+          <Animated.View style={tailwind.style('pt-6 mx-4')}>
+            <Animated.Text
+              style={tailwind.style(
+                'text-sm font-inter-medium-24 leading-[16px] tracking-[0.32px] text-gray-700 pb-3',
+              )}>
+              {i18n.t('SETTINGS.ACCOUNT')}
+            </Animated.Text>
+            <AccountDeletion accountId={activeAccount.id} accountName={activeAccount.name} />
+          </Animated.View>
+        ) : null}
         <Animated.View style={tailwind.style('pt-6 mx-4')}>
           <Button
             variant="secondary"

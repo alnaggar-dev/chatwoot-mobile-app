@@ -11,13 +11,7 @@ import { Platform } from 'react-native';
 import { getStore } from '@/store/storeAccessor';
 import I18n from '@/i18n';
 import { showToast } from '@/utils/toastUtils';
-
-const nonAccountRoutes = [
-  'profile',
-  'profile/availability',
-  'notification_subscriptions',
-  'profile/set_active_account',
-];
+import { getScopedApiUrl } from './apiRouteUtils';
 
 const CLIENT_NAME = 'FoxDesk Ai Mobile';
 const CLIENT_VERSION = Constants.expoConfig?.version ?? 'unknown';
@@ -73,11 +67,7 @@ class APIService {
         const state = store.getState();
         config.baseURL = state.settings?.installationUrl;
         const accountId = state.auth.user?.account_id;
-        if (accountId && config.url && !nonAccountRoutes.includes(config.url)) {
-          config.url = `api/v1/accounts/${accountId}/${config.url}`;
-        } else if (nonAccountRoutes.includes(config.url || '')) {
-          config.url = `api/v1/${config.url}`;
-        }
+        config.url = getScopedApiUrl(config.url, accountId);
         return {
           ...config,
           headers: {

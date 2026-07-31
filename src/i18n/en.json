@@ -303,7 +303,21 @@
     "LOGOUT": "Logout",
     "SUBMIT": "Submit",
     "SET_LANGUAGE": "Set Language",
-    "DEBUG_ACTIONS": "Debug Actions"
+    "DEBUG_ACTIONS": "Debug Actions",
+    "ACCOUNT": "Account",
+    "ACCOUNT_DELETION": {
+      "TITLE": "Delete account",
+      "DESCRIPTION": "Schedule this account and its data for permanent deletion in 7 days. Cloud subscriptions are canceled immediately. You can cancel the deletion before the scheduled date.",
+      "CONFIRM_TITLE": "Delete account?",
+      "CONFIRM_MESSAGE": "This will schedule %{accountName} for permanent deletion in 7 days and cancel its cloud subscriptions immediately.",
+      "KEEP_BUTTON": "Keep account",
+      "DELETE_BUTTON": "Delete account",
+      "CANCEL_BUTTON": "Cancel scheduled deletion",
+      "SCHEDULED": "This account is scheduled for deletion on %{deletionDate}. You can cancel before this date, but canceled subscriptions are not restored automatically.",
+      "UPDATING": "Updating...",
+      "SUCCESS": "Account scheduled for deletion",
+      "CANCEL_SUCCESS": "Scheduled deletion canceled"
+    }
   },
   "NOTIFICATION": {
     "HEADER_TITLE": "Notifications",
