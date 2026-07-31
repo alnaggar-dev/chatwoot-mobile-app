@@ -42,3 +42,10 @@ Reason: Let FoxDesk Cloud account administrators schedule and cancel the backend
 Touches: src/services/APIService.ts; src/services/apiRouteUtils.ts; src/services/specs/apiRouteUtils.spec.ts; src/store/account/accountService.ts; src/store/account/specs/accountService.spec.ts; src/screens/settings/components/AccountDeletion.tsx; src/screens/settings/SettingsScreen.tsx; src/i18n/en.json
 Verify: node -e "const fs=require('fs');const service=fs.readFileSync('src/store/account/accountService.ts','utf8');const routes=fs.readFileSync('src/services/apiRouteUtils.ts','utf8');const screen=fs.readFileSync('src/screens/settings/SettingsScreen.tsx','utf8');const copy=JSON.parse(fs.readFileSync('src/i18n/en.json','utf8'));if(!/enterprise\/api\/v1\/accounts\/[\s\S]*toggle_deletion/.test(service))process.exit(1);if(!/fullyScopedRoutePrefixes[\s\S]*enterprise\/api\/v1\/accounts\//.test(routes))process.exit(1);if(!/isFoxDeskCloud\s*&&\s*activeAccount\?\.role\s*===\s*'administrator'/.test(screen))process.exit(1);if(!copy.SETTINGS.ACCOUNT_DELETION?.DELETE_BUTTON)process.exit(1)"
 Test: pnpm test -- --runInBand src/store/account/specs/accountService.spec.ts src/services/specs/apiRouteUtils.spec.ts
+
+## custom: android-push-reliability
+
+Reason: Keep Android FCM subscriptions current after token rotation and show high-priority notification banners while FoxDesk Ai is foregrounded.
+Touches: src/navigation/tabs/AppTabs.tsx; src/utils/pushUtils.ts; src/utils/specs/pushUtils.spec.ts
+Verify: node -e "const fs=require('fs');const tabs=fs.readFileSync('src/navigation/tabs/AppTabs.tsx','utf8');const push=fs.readFileSync('src/utils/pushUtils.ts','utf8');if(!/messaging\(\)\.onTokenRefresh\([\s\S]*settingsActions\.saveDeviceDetails\(\)/.test(tabs))process.exit(1);if(!/messaging\(\)\.onMessage\(displayForegroundNotification\)/.test(tabs))process.exit(1);if(!/createChannel\([\s\S]*id: 'messages'[\s\S]*AndroidImportance\.HIGH/.test(push))process.exit(1);if(!/displayNotification\([\s\S]*pressAction:[\s\S]*id: 'default'/.test(push))process.exit(1)"
+Test: pnpm test -- --runInBand src/utils/specs/pushUtils.spec.ts

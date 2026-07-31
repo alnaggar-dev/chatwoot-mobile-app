@@ -1,25 +1,45 @@
 import { Platform } from 'react-native';
+import notifee, { AndroidImportance } from '@notifee/react-native';
+import type { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
 import { NOTIFICATION_TYPES } from '@/constants';
 import { Notification } from '@/types/Notification';
 
-let notifee: typeof import('@notifee/react-native').default | undefined;
-
-if (Platform.OS === 'ios') {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  notifee = require('@notifee/react-native')
-    .default as typeof import('@notifee/react-native').default;
-}
-
 export const clearAllDeliveredNotifications = async () => {
-  if (Platform.OS === 'ios' && notifee) {
+  if (Platform.OS === 'ios') {
     await notifee.cancelAllNotifications();
   }
 };
 
 export const updateBadgeCount = async ({ count = 0 }) => {
-  if (Platform.OS === 'ios' && count >= 0 && notifee) {
+  if (Platform.OS === 'ios' && count >= 0) {
     await notifee.setBadgeCount(count);
   }
+};
+
+export const displayForegroundNotification = async (
+  message: FirebaseMessagingTypes.RemoteMessage,
+) => {
+  if (Platform.OS !== 'android' || !message.notification) {
+    return;
+  }
+
+  const channelId = await notifee.createChannel({
+    id: 'messages',
+    name: 'FoxDesk Ai messages',
+    importance: AndroidImportance.HIGH,
+  });
+
+  await notifee.displayNotification({
+    title: message.notification.title,
+    body: message.notification.body,
+    data: message.data,
+    android: {
+      channelId,
+      pressAction: {
+        id: 'default',
+      },
+    },
+  });
 };
 
 export const findConversationLinkFromPush = ({

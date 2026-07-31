@@ -1,5 +1,52 @@
+import { Platform } from 'react-native';
+import notifee, { AndroidImportance } from '@notifee/react-native';
 import { transformNotification } from '../camelCaseKeys';
-import { findConversationLinkFromPush, findNotificationFromFCM } from '../pushUtils';
+import {
+  displayForegroundNotification,
+  findConversationLinkFromPush,
+  findNotificationFromFCM,
+} from '../pushUtils';
+
+jest.mock('@notifee/react-native', () => ({
+  __esModule: true,
+  AndroidImportance: { HIGH: 4 },
+  default: {
+    cancelAllNotifications: jest.fn(),
+    createChannel: jest.fn(async channel => channel.id),
+    displayNotification: jest.fn(),
+    setBadgeCount: jest.fn(),
+  },
+}));
+
+describe('displayForegroundNotification', () => {
+  it('displays Android messages on a high-priority channel', async () => {
+    const platform = jest.replaceProperty(Platform, 'OS', 'android');
+
+    await displayForegroundNotification({
+      messageId: 'message-1',
+      data: { payload: '{"notification":"message"}' },
+      notification: { title: 'New message', body: 'A customer replied' },
+      fcmOptions: {},
+    });
+
+    expect(notifee.createChannel).toHaveBeenCalledWith({
+      id: 'messages',
+      name: 'FoxDesk Ai messages',
+      importance: AndroidImportance.HIGH,
+    });
+    expect(notifee.displayNotification).toHaveBeenCalledWith({
+      title: 'New message',
+      body: 'A customer replied',
+      data: { payload: '{"notification":"message"}' },
+      android: {
+        channelId: 'messages',
+        pressAction: { id: 'default' },
+      },
+    });
+
+    platform.restore();
+  });
+});
 
 describe('findNotificationFromFCM', () => {
   it('should return notification from FCM HTTP v1 message', () => {

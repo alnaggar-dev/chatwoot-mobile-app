@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
 import { Platform } from 'react-native';
+import messaging from '@react-native-firebase/messaging';
 import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -36,7 +37,7 @@ import { labelActions } from '@/store/label/labelActions';
 import actionCableConnector from '@/utils/actionCable';
 import { setCurrentState } from '@/store/conversation/conversationHeaderSlice';
 import AnalyticsHelper from '@/utils/analyticsUtils';
-import { clearAllDeliveredNotifications } from '@/utils/pushUtils';
+import { clearAllDeliveredNotifications, displayForegroundNotification } from '@/utils/pushUtils';
 import { dashboardAppActions } from '@/store/dashboard-app/dashboardAppActions';
 import { customAttributeActions } from '@/store/custom-attribute/customAttributeActions';
 import { clearSelection } from '@/store/conversation/conversationSelectedSlice';
@@ -103,6 +104,18 @@ const Tabs = () => {
     initPushNotifications();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const unsubscribeTokenRefresh = messaging().onTokenRefresh(() => {
+      dispatch(settingsActions.saveDeviceDetails());
+    });
+    const unsubscribeForegroundMessage = messaging().onMessage(displayForegroundNotification);
+
+    return () => {
+      unsubscribeTokenRefresh();
+      unsubscribeForegroundMessage();
+    };
+  }, [dispatch]);
 
   const initAnalytics = useCallback(async () => {
     if (user) {
