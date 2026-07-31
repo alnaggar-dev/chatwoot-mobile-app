@@ -42,7 +42,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     android: {
       adaptiveIcon: { foregroundImage: './assets/adaptive-icon.png', backgroundColor: '#ffffff' },
       package: 'com.foxdesk.app',
-      permissions: ['android.permission.CAMERA', 'android.permission.RECORD_AUDIO'],
+      permissions: [
+        'android.permission.CAMERA',
+        'android.permission.RECORD_AUDIO',
+        'android.permission.POST_NOTIFICATIONS',
+      ],
       // Please use the relative path to the google-services.json file
       googleServicesFile: process.env.EXPO_PUBLIC_ANDROID_GOOGLE_SERVICES_FILE,
       intentFilters: [
@@ -100,8 +104,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           // https://github.com/invertase/notifee/issues/808#issuecomment-2175934609
           android: {
             minSdkVersion: 24,
-            compileSdkVersion: 35,
-            targetSdkVersion: 35,
+            compileSdkVersion: 36,
+            targetSdkVersion: 36,
             enableProguardInReleaseBuilds: true,
           },
           ios: { useFrameworks: 'static' },
