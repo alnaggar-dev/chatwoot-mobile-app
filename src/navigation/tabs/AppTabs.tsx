@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect } from 'react';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import messaging from '@react-native-firebase/messaging';
+import notifee, { EventType } from '@notifee/react-native';
 import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -41,6 +42,13 @@ import { clearAllDeliveredNotifications, displayForegroundNotification } from '@
 import { dashboardAppActions } from '@/store/dashboard-app/dashboardAppActions';
 import { customAttributeActions } from '@/store/custom-attribute/customAttributeActions';
 import { clearSelection } from '@/store/conversation/conversationSelectedSlice';
+import { navigationRef } from '@/utils/navigationUtils';
+import {
+  clearPendingNotificationData,
+  findConversationNavigationParamsFromData,
+  getPendingNotificationData,
+} from '@/utils/notificationPressUtils';
+import type { NotificationData } from '@/utils/notificationPressUtils';
 
 const Tab = createBottomTabNavigator();
 
@@ -87,6 +95,72 @@ const Tabs = () => {
   const userId = useAppSelector(selectUserId);
   const accountId = useAppSelector(selectCurrentUserAccountId);
   const webSocketUrl = useAppSelector(selectWebSocketUrl);
+
+  const openNotification = useCallback((data?: NotificationData) => {
+    const navigationParams = findConversationNavigationParamsFromData(data);
+
+    if (!navigationParams || !navigationRef.current?.isReady()) {
+      return false;
+    }
+
+    navigationRef.current.navigate('ChatScreen', navigationParams);
+    return true;
+  }, []);
+
+  const openPendingNotification = useCallback(async () => {
+    const data = await getPendingNotificationData();
+
+    if (data && openNotification(data)) {
+      await clearPendingNotificationData();
+    }
+  }, [openNotification]);
+
+  useEffect(() => {
+    let active = true;
+    let pendingTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const openInitialNotification = async () => {
+      const initialNotification = await notifee.getInitialNotification();
+
+      if (!active) {
+        return;
+      }
+
+      if (
+        initialNotification?.notification.data &&
+        openNotification(initialNotification.notification.data)
+      ) {
+        await clearPendingNotificationData();
+        return;
+      }
+
+      await openPendingNotification();
+    };
+
+    const unsubscribeNotifee = notifee.onForegroundEvent(({ type, detail }) => {
+      if (type === EventType.PRESS) {
+        openNotification(detail.notification?.data);
+      }
+    });
+
+    const appStateSubscription = AppState.addEventListener('change', state => {
+      if (state === 'active') {
+        void openPendingNotification();
+        pendingTimer = setTimeout(() => void openPendingNotification(), 500);
+      }
+    });
+
+    void openInitialNotification();
+
+    return () => {
+      active = false;
+      if (pendingTimer) {
+        clearTimeout(pendingTimer);
+      }
+      unsubscribeNotifee();
+      appStateSubscription.remove();
+    };
+  }, [openNotification, openPendingNotification]);
 
   useEffect(() => {
     // Here is the place we are loading all the data for the app first time first time or user switches account

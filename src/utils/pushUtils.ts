@@ -49,10 +49,23 @@ export const findConversationLinkFromPush = ({
   notification: Notification;
   installationUrl: string;
 }) => {
-  const { notificationType } = notification;
+  const navigationParams = findConversationNavigationParamsFromPush({ notification });
+
+  if (navigationParams) {
+    const { conversationId, primaryActorId, primaryActorType } = navigationParams;
+    return `${installationUrl}/app/accounts/1/conversations/${conversationId}/${primaryActorId}/${primaryActorType}`;
+  }
+  return;
+};
+
+export const findConversationNavigationParamsFromPush = ({
+  notification,
+}: {
+  notification: Notification;
+}) => {
+  const { notificationType, primaryActor, primaryActorId, primaryActorType } = notification;
 
   if (NOTIFICATION_TYPES.includes(notificationType)) {
-    const { primaryActor, primaryActorId, primaryActorType } = notification;
     let conversationId = null;
     if (primaryActorType === 'Conversation') {
       conversationId = primaryActor.id;
@@ -60,8 +73,7 @@ export const findConversationLinkFromPush = ({
       conversationId = primaryActor.conversationId;
     }
     if (conversationId) {
-      const conversationLink = `${installationUrl}/app/accounts/1/conversations/${conversationId}/${primaryActorId}/${primaryActorType}`;
-      return conversationLink;
+      return { conversationId, primaryActorId, primaryActorType };
     }
   }
   return;
@@ -77,13 +89,14 @@ interface FCMMessage {
 export const findNotificationFromFCM = ({ message }: { message: FCMMessage }) => {
   let notification = null;
   // FCM HTTP v1
-  if (message?.data?.payload) {
-    const parsedPayload = JSON.parse(message.data.payload);
+  const { data } = message;
+  if (data?.payload) {
+    const parsedPayload = JSON.parse(data.payload);
     notification = parsedPayload.data.notification;
   }
   // FCM legacy. It will be deprecated soon
-  else {
-    notification = JSON.parse(message.data.notification);
+  else if (data?.notification) {
+    notification = JSON.parse(data.notification);
   }
   return notification;
 };

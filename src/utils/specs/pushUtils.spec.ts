@@ -4,6 +4,7 @@ import { transformNotification } from '../camelCaseKeys';
 import {
   displayForegroundNotification,
   findConversationLinkFromPush,
+  findConversationNavigationParamsFromPush,
   findNotificationFromFCM,
 } from '../pushUtils';
 
@@ -162,5 +163,23 @@ describe('findConversationLinkFromPush', () => {
       installationUrl,
     });
     expect(result).toBe(undefined);
+  });
+});
+
+describe('findConversationNavigationParamsFromPush', () => {
+  it('returns navigation params for a conversation assignment', () => {
+    const notification = transformNotification({
+      id: 8687,
+      notificationType: 'conversation_assignment',
+      primaryActorId: 14902,
+      primaryActorType: 'Conversation',
+      primaryActor: { id: 14428 },
+    });
+
+    expect(findConversationNavigationParamsFromPush({ notification })).toEqual({
+      conversationId: 14428,
+      primaryActorId: 14902,
+      primaryActorType: 'Conversation',
+    });
   });
 });

@@ -1,7 +1,9 @@
 import * as Sentry from '@sentry/react-native';
+import notifee, { EventType } from '@notifee/react-native';
 
 import Constants from 'expo-constants';
 import App from './src/app';
+import { storePendingNotificationData } from './src/utils/notificationPressUtils';
 
 // TODO: It is a temporary fix to fix the reanimated logger issue
 // Ref: https://github.com/gorhom/react-native-bottom-sheet/issues/1983
@@ -10,6 +12,12 @@ import './reanimatedConfig';
 // import './wdyr';
 
 const isStorybookEnabled = Constants.expoConfig?.extra?.eas?.storybookEnabled;
+
+notifee.onBackgroundEvent(async ({ type, detail }) => {
+  if (type === EventType.PRESS) {
+    await storePendingNotificationData(detail.notification?.data);
+  }
+});
 
 if (!__DEV__) {
   Sentry.init({
