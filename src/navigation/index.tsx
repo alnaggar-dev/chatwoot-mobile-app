@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
 import messaging from '@react-native-firebase/messaging';
 import { getStateFromPath } from '@react-navigation/native';
@@ -11,6 +11,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { AppTabs } from './tabs/AppTabs';
 import i18n from 'i18n';
 import { navigationRef } from '@/utils/navigationUtils';
+import { syncRTLDirection } from '@/utils/rtlUtils';
 import { findConversationLinkFromPush, findNotificationFromFCM } from '@/utils/pushUtils';
 import { extractConversationIdFromUrl } from '@/utils/conversationUtils';
 import { useAppSelector } from '@/hooks';
@@ -175,6 +176,10 @@ export const AppNavigationContainer = () => {
   };
 
   i18n.locale = locale;
+
+  useEffect(() => {
+    syncRTLDirection(locale);
+  }, [locale]);
 
   const onLayoutRootView = useCallback(async () => {
     if (fontsLoaded) {
