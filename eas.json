@@ -10,13 +10,19 @@
     },
     "production": {
       "pnpm": "10.11.0",
-      "autoIncrement": true
+      "autoIncrement": true,
+      "ios": {
+        "image": "macos-sequoia-15.6-xcode-26.1"
+      }
     }
   },
   "submit": {
     "production": {
       "android": {
         "track": "internal" // (enum: production, beta, alpha, internal)
+      },
+      "ios": {
+        "ascAppId": "6760915913"
       }
     }
   }
