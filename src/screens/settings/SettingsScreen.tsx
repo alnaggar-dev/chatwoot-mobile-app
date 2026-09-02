@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { StatusBar, Text, Platform, Pressable } from 'react-native';
 import Animated from 'react-native-reanimated';
 // import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -40,10 +40,11 @@ import {
 } from '@/components-next';
 import { UserAvatar } from './components/UserAvatar';
 import { AccountDeletion } from './components/AccountDeletion';
+import { CaptainConsentSheet } from '@/screens/chat-screen/components/copilot/CaptainConsentSheet';
 
 import { LANGUAGES, TAB_BAR_HEIGHT } from '@/constants';
 import { useRefsContext } from '@/context';
-import { FoxDeskIcon, NotificationIcon, SwitchIcon, TranslateIcon } from '@/svg-icons';
+import { FoxDeskIcon, NotificationIcon, SparkleIcon, SwitchIcon, TranslateIcon } from '@/svg-icons';
 import { GenericListType } from '@/types';
 
 import { useHaptic } from '@/utils';
@@ -60,6 +61,7 @@ import {
   selectLocale,
   selectIsFoxDeskCloud,
   selectPushToken,
+  selectCaptainConsent,
 } from '@/store/settings/settingsSelectors';
 import { settingsActions } from '@/store/settings/settingsActions';
 import { setLocale } from '@/store/settings/settingsSlice';
@@ -145,6 +147,8 @@ const SettingsScreen = () => {
     switchAccountSheetRef,
     debugActionsSheetRef,
   } = useRefsContext();
+  const captainConsentSheetRef = useRef<BottomSheetModal>(null);
+  const hasCaptainConsent = useAppSelector(selectCaptainConsent);
 
   const hapticSelection = useHaptic();
 
@@ -243,6 +247,16 @@ const SettingsScreen = () => {
       subtitle: LANGUAGES[activeLocale as keyof typeof LANGUAGES],
       subtitleType: 'light',
       onPressListItem: () => languagesModalSheetRef.current?.present(),
+    },
+    {
+      hasChevron: true,
+      title: i18n.t('SETTINGS.CAPTAIN_AI'),
+      icon: <SparkleIcon />,
+      subtitle: hasCaptainConsent
+        ? i18n.t('SETTINGS.CAPTAIN_AI_ALLOWED')
+        : i18n.t('SETTINGS.CAPTAIN_AI_NOT_ALLOWED'),
+      subtitleType: 'light',
+      onPressListItem: () => captainConsentSheetRef.current?.present(),
     },
     {
       hasChevron: enableAccountSwitch,
@@ -424,6 +438,7 @@ const SettingsScreen = () => {
           <DebugActions />
         </BottomSheetWrapper>
       </BottomSheetModal>
+      <CaptainConsentSheet ref={captainConsentSheetRef} />
       {!!process.env.EXPO_PUBLIC_FOXDESK_WEBSITE_TOKEN &&
         !!process.env.EXPO_PUBLIC_FOXDESK_BASE_URL &&
         !!showWidget && (

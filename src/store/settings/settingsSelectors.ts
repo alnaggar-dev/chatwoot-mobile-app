@@ -1,5 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '@/store';
+import { selectUserId } from '@/store/auth/authSelectors';
 
 export const selectSettings = (state: RootState) => state.settings;
 
@@ -33,3 +34,8 @@ export const selectIsFoxDeskCloud = createSelector(selectSettings, settings =>
 export const selectFoxDeskVersion = createSelector(selectSettings, settings => settings.version);
 
 export const selectPushToken = createSelector(selectSettings, settings => settings.pushToken);
+
+export const selectCaptainConsent = createSelector(
+  [selectSettings, selectUserId],
+  (settings, userId) => userId !== undefined && settings.captainConsentByUser?.[userId] === true,
+);

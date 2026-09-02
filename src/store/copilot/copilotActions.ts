@@ -1,6 +1,8 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { CopilotService } from './copilotService';
-import { REWRITE_ACTIONS } from '@/constants/copilot';
+import { COPILOT_CONSENT_REQUIRED, REWRITE_ACTIONS } from '@/constants/copilot';
+import { selectCaptainConsent } from '@/store/settings/settingsSelectors';
+import type { RootState } from '@/store';
 import type { CopilotActionKey, CopilotTaskResponse } from '@/types/Copilot';
 import type { AxiosError } from 'axios';
 import type { ApiErrorResponse } from '@/store/conversation/conversationTypes';
@@ -19,9 +21,14 @@ interface SendCopilotFollowUpPayload {
 
 export const executeCopilotAction = createAsyncThunk<
   CopilotTaskResponse,
-  ExecuteCopilotActionPayload
->('copilot/executeCopilotAction', async (payload, { rejectWithValue, signal }) => {
+  ExecuteCopilotActionPayload,
+  { state: RootState }
+>('copilot/executeCopilotAction', async (payload, { rejectWithValue, signal, getState }) => {
   try {
+    if (!selectCaptainConsent(getState())) {
+      return rejectWithValue({ name: COPILOT_CONSENT_REQUIRED });
+    }
+
     const { actionKey, content, conversationId } = payload;
 
     if (REWRITE_ACTIONS.includes(actionKey as (typeof REWRITE_ACTIONS)[number])) {
@@ -51,9 +58,14 @@ export const executeCopilotAction = createAsyncThunk<
 
 export const sendCopilotFollowUp = createAsyncThunk<
   CopilotTaskResponse,
-  SendCopilotFollowUpPayload
->('copilot/sendCopilotFollowUp', async (payload, { rejectWithValue, signal }) => {
+  SendCopilotFollowUpPayload,
+  { state: RootState }
+>('copilot/sendCopilotFollowUp', async (payload, { rejectWithValue, signal, getState }) => {
   try {
+    if (!selectCaptainConsent(getState())) {
+      return rejectWithValue({ name: COPILOT_CONSENT_REQUIRED });
+    }
+
     return await CopilotService.followUp(payload, signal);
   } catch (error) {
     const { response } = error as AxiosError<ApiErrorResponse>;

@@ -11,3 +11,8 @@ export const REPLY_POLICY = {
   TWILIO_WHATSAPP:
     'https://www.twilio.com/docs/whatsapp/tutorial/send-whatsapp-notification-messages-templates#sending-non-template-messages-within-a-24-hour-session',
 };
+
+export const PRIVACY_POLICY_URL = {
+  en: 'https://www.foxdeskai.com/en/privacy-policy/',
+  ar: 'https://www.foxdeskai.com/ar/privacy-policy/',
+};

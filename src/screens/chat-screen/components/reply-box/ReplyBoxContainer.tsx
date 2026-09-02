@@ -10,6 +10,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 
 import { useChatWindowContext, useRefsContext } from '@/context';
 import {
@@ -85,6 +86,9 @@ import {
 } from '@/store/copilot/copilotSlice';
 import { executeCopilotAction, sendCopilotFollowUp } from '@/store/copilot/copilotActions';
 import type { CopilotActionKey } from '@/types/Copilot';
+import { CaptainConsentSheet } from '../copilot/CaptainConsentSheet';
+import { selectCaptainConsent } from '@/store/settings/settingsSelectors';
+import { COPILOT_CONSENT_REQUIRED } from '@/constants/copilot';
 
 const SHEET_APPEAR_SPRING_CONFIG = {
   damping: 20,
@@ -133,6 +137,8 @@ const BottomSheetContent = () => {
   const originalContent = useAppSelector(selectOriginalContent);
   const followUpContext = useAppSelector(selectFollowUpContext);
   const { toneSelectionSheetRef } = useRefsContext();
+  const captainConsentSheetRef = useRef<BottomSheetModal>(null);
+  const hasCaptainConsent = useAppSelector(selectCaptainConsent);
 
   // Reset copilot state and abort in-flight requests when conversation changes or unmount
   useEffect(() => {
@@ -140,6 +146,7 @@ const BottomSheetContent = () => {
     dispatch(resetCopilot());
     setIsCopilotMenuOpen(false);
     toneSelectionSheetRef.current?.dismiss();
+    captainConsentSheetRef.current?.dismiss();
     return () => {
       copilotAbortRef.current?.abort();
       dispatch(resetCopilot());
@@ -262,6 +269,10 @@ const BottomSheetContent = () => {
     } else {
       Keyboard.dismiss();
       setAddMenuOptionSheetState(false);
+      if (!hasCaptainConsent) {
+        captainConsentSheetRef.current?.present();
+        return;
+      }
       setIsCopilotMenuOpen(true);
     }
   };
@@ -275,7 +286,7 @@ const BottomSheetContent = () => {
     );
     copilotAbortRef.current = promise;
     promise.unwrap().catch((err: { name?: string }) => {
-      if (err?.name === 'AbortError') return;
+      if (err?.name === 'AbortError' || err?.name === COPILOT_CONSENT_REQUIRED) return;
       showToast({ message: i18n.t('COPILOT.GENERATION_FAILED') });
     });
   };
@@ -293,7 +304,7 @@ const BottomSheetContent = () => {
     );
     copilotAbortRef.current = promise;
     promise.unwrap().catch((err: { name?: string }) => {
-      if (err?.name === 'AbortError') return;
+      if (err?.name === 'AbortError' || err?.name === COPILOT_CONSENT_REQUIRED) return;
       showToast({ message: i18n.t('COPILOT.GENERATION_FAILED') });
     });
   };
@@ -317,7 +328,7 @@ const BottomSheetContent = () => {
       );
       copilotAbortRef.current = promise;
       promise.unwrap().catch((err: { name?: string }) => {
-        if (err?.name === 'AbortError') return;
+        if (err?.name === 'AbortError' || err?.name === COPILOT_CONSENT_REQUIRED) return;
         showToast({ message: i18n.t('COPILOT.FOLLOW_UP_FAILED') });
       });
       setCopilotFollowUpText('');
@@ -614,6 +625,10 @@ const BottomSheetContent = () => {
       ) : null}
 
       <ToneSelectionSheet ref={toneSelectionSheetRef} onSelectTone={handleToneSelected} />
+      <CaptainConsentSheet
+        ref={captainConsentSheetRef}
+        onAllow={() => setIsCopilotMenuOpen(true)}
+      />
     </AnimatedKeyboardStickyView>
   );
 };

@@ -1,9 +1,9 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { settingsActions } from './settingsActions';
 import { NotificationSettings } from './settingsTypes';
 import { Theme } from '@/types/common/Theme';
 
-interface SettingsState {
+export interface SettingsState {
   baseUrl: string;
   installationUrl: string;
   uiFlags: {
@@ -16,6 +16,7 @@ interface SettingsState {
   theme: Theme;
   version: string;
   pushToken: string;
+  captainConsentByUser: Record<number, boolean>;
 }
 
 export const INSTALLATION_URL_DEFAULTS: Pick<
@@ -45,6 +46,7 @@ const initialState: SettingsState = {
   theme: 'system',
   version: '',
   pushToken: '',
+  captainConsentByUser: {},
 };
 export const settingsSlice = createSlice({
   name: 'settings',
@@ -56,6 +58,14 @@ export const settingsSlice = createSlice({
     setLocale: (state, action) => {
       state.localeValue = action.payload;
       state.uiFlags.isLocaleSet = true;
+    },
+    setCaptainConsent: (state, action: PayloadAction<{ userId: number; allowed: boolean }>) => {
+      const { userId, allowed } = action.payload;
+      // Persisted state from older installs may lack this map (autoMergeLevel1)
+      if (!state.captainConsentByUser) {
+        state.captainConsentByUser = {};
+      }
+      state.captainConsentByUser[userId] = allowed;
     },
   },
   extraReducers: builder => {
@@ -87,5 +97,5 @@ export const settingsSlice = createSlice({
       });
   },
 });
-export const { resetSettings, setLocale } = settingsSlice.actions;
+export const { resetSettings, setLocale, setCaptainConsent } = settingsSlice.actions;
 export default settingsSlice.reducer;
