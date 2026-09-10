@@ -31,6 +31,7 @@ import { selectIsLoggingIn } from '@/store/auth/authSelectors';
 import { setLocale } from '@/store/settings/settingsSlice';
 import { useRefsContext } from '@/context/RefsContext';
 import { SsoUtils } from '@/utils/ssoUtils';
+import { restartForLocaleDirection } from '@/utils/rtlUtils';
 
 type FormData = {
   email: string;
@@ -107,6 +108,7 @@ const LoginScreen = () => {
 
   const onChangeLanguage = (locale: string) => {
     dispatch(setLocale(locale));
+    restartForLocaleDirection(locale);
   };
 
   const handleSsoLogin = async () => {

@@ -177,9 +177,12 @@ export const AppNavigationContainer = () => {
 
   i18n.locale = locale;
 
+  // Launch only: re-applies the direction flags if a previous restart dropped
+  // them. Restarting on language change is done by the picker screens.
   useEffect(() => {
     syncRTLDirection(locale);
-  }, [locale]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onLayoutRootView = useCallback(async () => {
     if (fontsLoaded) {

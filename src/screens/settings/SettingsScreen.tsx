@@ -69,6 +69,7 @@ import { setLocale } from '@/store/settings/settingsSlice';
 import AnalyticsHelper from '@/utils/analyticsUtils';
 import { PROFILE_EVENTS } from '@/constants/analyticsEvents';
 import { getUserPermissions } from '@/utils/permissionUtils';
+import { restartForLocaleDirection } from '@/utils/rtlUtils';
 import { CONVERSATION_PERMISSIONS } from '@/constants/permissions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 
@@ -176,6 +177,7 @@ const SettingsScreen = () => {
 
   const onChangeLanguage = (locale: string) => {
     dispatch(setLocale(locale));
+    restartForLocaleDirection(locale);
   };
 
   const changeAccount = (accountId: number) => {
