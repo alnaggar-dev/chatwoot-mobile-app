@@ -8,7 +8,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   return {
     name: 'FoxDesk Ai',
     slug: 'foxdesk-ai',
-    version: '4.7.0',
+    version: '4.7.1',
     orientation: 'portrait',
     icon: './assets/icon.png',
     userInterfaceStyle: 'light',
