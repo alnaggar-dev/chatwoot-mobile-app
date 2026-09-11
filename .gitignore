@@ -41,3 +41,8 @@ google-services.json
 GoogleService-Info.plist
 .env
 .env.local
+
+# Google Cloud service account keys (Play Store submission / Firebase admin) — never commit
+foxdesk-ai-*.json
+*-adminsdk-*.json
+*service-account*.json
