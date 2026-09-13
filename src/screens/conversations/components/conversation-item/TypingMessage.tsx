@@ -14,7 +14,9 @@ export const TypingMessage = (props: TypingMessageProps) => {
     <NativeView style={tailwind.style('flex-1 flex-row gap-1 items-center')}>
       <Text
         numberOfLines={1}
-        style={tailwind.style('text-md flex-1 font-inter-medium-24 leading-[20px] text-brand')}>
+        style={tailwind.style(
+          'text-md flex-1 font-inter-medium-24 leading-[20px] text-brand text-left',
+        )}>
         {typingText}
       </Text>
     </NativeView>

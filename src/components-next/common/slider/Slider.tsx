@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutChangeEvent, StyleSheet } from 'react-native';
+import { I18nManager, LayoutChangeEvent, StyleSheet } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   clamp,
@@ -108,8 +108,14 @@ export const Slider = (props: SliderProps) => {
     width: translationX.value + 8,
   }));
 
+  // Playback progress always reads left-to-right: under RTL the absolute knob/filled track would
+  // anchor at the right edge while translateX still moves right, pushing the knob out of the bubble.
   return (
-    <Animated.View style={tailwind.style('flex flex-row flex-1 mx-1.5')}>
+    <Animated.View
+      style={tailwind.style(
+        'flex flex-row flex-1 mx-1.5',
+        I18nManager.isRTL && 'flex-row-reverse',
+      )}>
       <Animated.View
         onLayout={handleLayout}
         style={tailwind.style('relative rounded-2xl flex-1 h-1', trackColor)}

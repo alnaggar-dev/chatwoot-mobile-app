@@ -332,9 +332,10 @@ const SettingsScreen = () => {
         </Animated.View>
         {canDeleteAccount && activeAccount ? (
           <Animated.View style={tailwind.style('pt-6 mx-4')}>
+            {/* left = start: RN flips it under RTL, natural alignment on iOS does not */}
             <Animated.Text
               style={tailwind.style(
-                'text-sm font-inter-medium-24 leading-[16px] tracking-[0.32px] text-gray-700 pb-3',
+                'text-sm font-inter-medium-24 leading-[16px] tracking-[0.32px] text-gray-700 pb-3 text-left',
               )}>
               {i18n.t('SETTINGS.ACCOUNT')}
             </Animated.Text>

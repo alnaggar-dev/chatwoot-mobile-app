@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { Platform, Pressable, View } from 'react-native';
+import { I18nManager, Platform, Pressable, View } from 'react-native';
 import { PlayBackType } from 'react-native-audio-recorder-player';
 import Animated, { FadeIn, FadeOut, useSharedValue } from 'react-native-reanimated';
 import Svg, { Path, Rect } from 'react-native-svg';
@@ -160,8 +160,13 @@ export const AudioBubblePlayer = React.memo((props: AudioPlayerProps) => {
     [variant, manualSeekTo, currentPosition, totalDuration, pauseAudio],
   );
 
+  // Playback always reads left-to-right (play button at the left) even under RTL
   return (
-    <View style={tailwind.style('w-full flex flex-row items-center flex-1')}>
+    <View
+      style={tailwind.style(
+        'w-full flex flex-row items-center flex-1',
+        I18nManager.isRTL && 'flex-row-reverse',
+      )}>
       <Pressable disabled={isSoundLoading} hitSlop={10} onPress={togglePlayback}>
         {isSoundLoading ? (
           <Animated.View>

@@ -33,9 +33,10 @@ export const InboxHeader = (props: InboxHeaderProps) => {
     <Animated.View style={tailwind.style('border-b-[1px] border-b-blackA-A3')}>
       <Animated.View
         style={tailwind.style('flex flex-row items-center justify-between gap-4 px-4 pt-4 pb-3')}>
+        {/* left = start: RN flips it under RTL, natural alignment on iOS does not */}
         <Animated.Text
           numberOfLines={1}
-          style={tailwind.style('flex-1 text-3xl font-inter-semibold-20 text-ink')}>
+          style={tailwind.style('flex-1 text-3xl font-inter-semibold-20 text-ink text-left')}>
           {i18n.t('NOTIFICATION.INBOX')}
         </Animated.Text>
         <Animated.View style={tailwind.style('flex flex-row items-center gap-5')}>

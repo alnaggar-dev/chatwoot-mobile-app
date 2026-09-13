@@ -140,9 +140,10 @@ export const ConversationHeaderPresenter = ({
   return (
     <Animated.View style={tailwind.style('px-4 pt-4 pb-3')}>
       <Animated.View style={tailwind.style('flex flex-row items-center justify-between gap-4')}>
+        {/* left = start: RN flips it under RTL, natural alignment on iOS does not */}
         <Text
           numberOfLines={1}
-          style={tailwind.style('flex-1 text-3xl font-inter-semibold-20 text-ink')}>
+          style={tailwind.style('flex-1 text-3xl font-inter-semibold-20 text-ink text-left')}>
           {i18n.t('CONVERSATION.HEADER.TITLE')}
         </Text>
         <Animated.View style={tailwind.style('flex flex-row items-center gap-5')}>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Animated, Image, Pressable, StatusBar, TextInput, View } from 'react-native';
+import { Animated, I18nManager, Image, Pressable, StatusBar, TextInput, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import {
   BottomSheetModal,
@@ -184,13 +184,15 @@ const LoginScreen = () => {
           }}
           render={({ field: { onChange, onBlur, value } }) => (
             <View style={tailwind.style('pt-10 gap-2')}>
-              <Animated.Text style={tailwind.style('font-inter-420-20 text-ink')}>
+              <Animated.Text style={tailwind.style('font-inter-420-20 text-ink text-left')}>
                 {i18n.t('LOGIN.EMAIL')}
               </Animated.Text>
+              {/* TextInput alignment is physical on both platforms (RN only flips Text), so RTL must ask for right */}
               <TextInput
                 style={tailwind.style(
                   'text-base font-inter-normal-20 tracking-[0.24px] leading-[20px] android:leading-[18px]',
                   'h-12 px-4 rounded-control bg-white border text-ink',
+                  I18nManager.isRTL && 'text-right',
                   errors.email
                     ? 'border-ruby-700'
                     : focusedField === 'email'
@@ -209,7 +211,8 @@ const LoginScreen = () => {
                 autoCapitalize="none"
               />
               {errors.email && (
-                <Animated.Text style={tailwind.style('font-inter-normal-20 text-ruby-900')}>
+                <Animated.Text
+                  style={tailwind.style('font-inter-normal-20 text-ruby-900 text-left')}>
                   {errors.email.message}
                 </Animated.Text>
               )}
@@ -248,6 +251,7 @@ const LoginScreen = () => {
                   style={tailwind.style(
                     'text-base font-inter-normal-20 tracking-[0.24px] leading-[20px] android:leading-[18px]',
                     'h-12 pl-4 pr-12 rounded-control bg-white border text-ink',
+                    I18nManager.isRTL && 'text-right',
                     errors.password
                       ? 'border-ruby-700'
                       : focusedField === 'password'
@@ -272,7 +276,8 @@ const LoginScreen = () => {
                 </Pressable>
               </View>
               {errors.password && (
-                <Animated.Text style={tailwind.style('font-inter-normal-20 text-ruby-900')}>
+                <Animated.Text
+                  style={tailwind.style('font-inter-normal-20 text-ruby-900 text-left')}>
                   {errors.password.message}
                 </Animated.Text>
               )}

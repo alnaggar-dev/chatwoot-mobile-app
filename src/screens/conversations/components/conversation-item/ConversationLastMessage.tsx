@@ -33,9 +33,10 @@ export const ATTACHMENT_ICONS = {
 
 // One preview style for every message shape. Unread steps up weight and
 // contrast rather than introducing another colour into the row.
+// left = start: RN flips it under RTL, natural alignment on iOS does not.
 const previewTextStyle = (isUnread: boolean) =>
   tailwind.style(
-    'text-md flex-1 leading-[20px]',
+    'text-md flex-1 leading-[20px] text-left',
     isUnread ? 'font-inter-medium-24 text-ink' : 'font-inter-normal-20 text-ink-secondary',
   );
 

@@ -22,7 +22,8 @@ const BULLET_KEYS = [
   'COPILOT.CONSENT.BULLET_SUGGEST',
 ] as const;
 
-const BODY_TEXT_STYLE = 'text-[14px] font-inter-normal-20 leading-[20px] text-gray-800';
+// left = start: RN flips it under RTL, natural alignment on iOS does not
+const BODY_TEXT_STYLE = 'text-[14px] font-inter-normal-20 leading-[20px] text-gray-800 text-left';
 
 const renderBackdrop = (props: BottomSheetBackdropProps) => (
   <BottomSheetBackdrop {...props} pressBehavior="none" appearsOnIndex={0} disappearsOnIndex={-1} />
@@ -83,7 +84,7 @@ export const CaptainConsentSheet = forwardRef<BottomSheetModal, CaptainConsentSh
           contentContainerStyle={tailwind.style('px-4', `pb-[${24 + bottom}px]`)}>
           <Text
             style={tailwind.style(
-              'text-[17px] font-inter-580-24 leading-[22px] tracking-[0.3px] text-gray-950 pt-1 pb-3',
+              'text-[17px] font-inter-580-24 leading-[22px] tracking-[0.3px] text-gray-950 pt-1 pb-3 text-left',
             )}>
             {i18n.t('COPILOT.CONSENT.TITLE')}
           </Text>

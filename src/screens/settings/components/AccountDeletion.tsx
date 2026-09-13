@@ -79,10 +79,12 @@ export const AccountDeletion = ({ accountId, accountName }: AccountDeletionProps
 
   return (
     <View style={tailwind.style('rounded-control bg-surface-subtle p-4 gap-3')}>
-      <Text style={tailwind.style('text-base font-inter-580-24 text-ink')}>
+      {/* left = start: RN flips it under RTL, natural alignment on iOS does not */}
+      <Text style={tailwind.style('text-base font-inter-580-24 text-ink text-left')}>
         {i18n.t('SETTINGS.ACCOUNT_DELETION.TITLE')}
       </Text>
-      <Text style={tailwind.style('text-sm font-inter-normal-20 leading-5 text-ink-muted')}>
+      <Text
+        style={tailwind.style('text-sm font-inter-normal-20 leading-5 text-ink-muted text-left')}>
         {deletionDate
           ? i18n.t('SETTINGS.ACCOUNT_DELETION.SCHEDULED', {
               deletionDate: formattedDeletionDate,

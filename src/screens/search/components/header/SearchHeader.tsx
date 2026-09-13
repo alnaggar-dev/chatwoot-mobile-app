@@ -39,9 +39,10 @@ export function SearchHeader({
             <Icon icon={<ChevronLeft />} size={24} />
           </Pressable>
         </Animated.View>
+        {/* left = start: RN flips it under RTL, natural alignment on iOS does not */}
         <Animated.Text
           numberOfLines={1}
-          style={tailwind.style('px-4 pt-1 text-3xl font-inter-semibold-20 text-ink')}>
+          style={tailwind.style('px-4 pt-1 text-3xl font-inter-semibold-20 text-ink text-left')}>
           {i18n.t('SEARCH.TITLE')}
         </Animated.Text>
         {/* SearchBar carries its own px-3, so px-1 lands the field on the px-4 grid. */}

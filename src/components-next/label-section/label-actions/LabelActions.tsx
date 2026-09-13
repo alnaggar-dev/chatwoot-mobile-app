@@ -90,9 +90,10 @@ export const LabelActions = (props: LabelActionsProps) => {
   return (
     <Animated.View>
       <Animated.View style={tailwind.style('pl-4')}>
+        {/* left = start: RN flips it under RTL, natural alignment on iOS does not */}
         <Animated.Text
           style={tailwind.style(
-            'text-sm font-inter-medium-24 leading-[16px] tracking-[0.32px] text-gray-700',
+            'text-sm font-inter-medium-24 leading-[16px] tracking-[0.32px] text-gray-700 text-left',
           )}>
           {titleText}
         </Animated.Text>
