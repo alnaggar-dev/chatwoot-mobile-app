@@ -11,7 +11,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { AppTabs } from './tabs/AppTabs';
 import i18n from 'i18n';
 import { navigationRef } from '@/utils/navigationUtils';
-import { syncRTLDirection } from '@/utils/rtlUtils';
+import { repairLocaleDirectionAtLaunch } from '@/utils/rtlUtils';
 import { findConversationLinkFromPush, findNotificationFromFCM } from '@/utils/pushUtils';
 import { extractConversationIdFromUrl } from '@/utils/conversationUtils';
 import { useAppSelector } from '@/hooks';
@@ -177,10 +177,11 @@ export const AppNavigationContainer = () => {
 
   i18n.locale = locale;
 
-  // Launch only: re-applies the direction flags if a previous restart dropped
-  // them. Restarting on language change is done by the picker screens.
+  // Launch only: repairs a layout direction left disagreeing with the saved
+  // language by an interrupted switch (at most one reload; a no-op otherwise).
+  // Language changes restart from the picker screens.
   useEffect(() => {
-    syncRTLDirection(locale);
+    repairLocaleDirectionAtLaunch(locale);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
