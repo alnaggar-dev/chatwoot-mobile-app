@@ -35,7 +35,7 @@ export const MarkdownDisplay = (props: MarkdownDisplayProps) => {
       ...textStyle,
     },
     strong: {
-      fontFamily: 'Inter-600-20',
+      fontFamily: 'DINNextLTW23-SemiBold',
       fontWeight: '600',
     },
     em: {
@@ -44,7 +44,7 @@ export const MarkdownDisplay = (props: MarkdownDisplayProps) => {
     paragraph: {
       marginTop: 0,
       marginBottom: 0,
-      fontFamily: 'Inter-400-20',
+      fontFamily: 'DINNextLTW23-Regular',
     },
     bullet_list: {
       minWidth: 200,

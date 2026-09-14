@@ -18,7 +18,7 @@ type CopilotEditorSectionProps = {
 const markdownStyles = StyleSheet.create({
   body: {
     fontSize: 14,
-    fontFamily: 'Inter-400-20',
+    fontFamily: 'DINNextLTW23-Regular',
     lineHeight: 21,
     letterSpacing: -0.1,
     color: tailwind.color('text-slate-950') as string,
@@ -28,7 +28,7 @@ const markdownStyles = StyleSheet.create({
     marginBottom: 0,
   },
   strong: {
-    fontFamily: 'Inter-600-20',
+    fontFamily: 'DINNextLTW23-SemiBold',
     fontWeight: '600',
   },
   em: {

@@ -80,22 +80,18 @@ export const twConfig = {
         control: '12px',
         sheet: '20px',
       },
-      // We are using individual static Inter font files (e.g., Inter-400-20.ttf) to load different font weights and styles
-      // Please refer to the following links for more information:
-      // https://medium.com/timeless/adding-custom-variable-fonts-in-react-native-47e0d062bcfc
-      // https://medium.com/timeless/adding-custom-variable-fonts-in-react-native-part-ii-d11a979a38f3
-      // - Normal/Regular: "inter-normal-20" (400)
-      // - Slightly heavier than Regular: "inter-420-20" (400)
-      // - Medium: "inter-medium-24" (500)
-      // - Between Medium and Semi-bold: "inter-580-24" (600)
-      // - Semi-bold: "inter-semibold-24" (600)
-      // -  Last numbers (20, 24 etc) are optical sizes.
+      // DIN Next LT W23 ships only a Regular weight; Medium and SemiBold are
+      // derived by scripts/build-din-next-fonts.py. Token names are kept from
+      // the previous Inter setup so call sites stay unchanged.
+      // - Normal/Regular: "inter-normal-20", "inter-420-20"
+      // - Medium: "inter-medium-24"
+      // - Semi-bold: "inter-580-24", "inter-semibold-20"
       fontFamily: {
-        'inter-normal-20': ['Inter-400-20'],
-        'inter-420-20': ['Inter-420-20'],
-        'inter-medium-24': ['Inter-500-24'],
-        'inter-580-24': ['Inter-580-24'],
-        'inter-semibold-20': ['Inter-600-20'],
+        'inter-normal-20': ['DINNextLTW23-Regular'],
+        'inter-420-20': ['DINNextLTW23-Regular'],
+        'inter-medium-24': ['DINNextLTW23-Medium'],
+        'inter-580-24': ['DINNextLTW23-SemiBold'],
+        'inter-semibold-20': ['DINNextLTW23-SemiBold'],
       },
     },
   },

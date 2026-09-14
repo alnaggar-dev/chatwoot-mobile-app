@@ -71,6 +71,6 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 40,
-    fontFamily: 'Inter-500-24',
+    fontFamily: 'DINNextLTW23-Medium',
   },
 });
