@@ -33,6 +33,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           'This app does not use Apple Music, but a system API may require this permission.',
         UIBackgroundModes: ['fetch', 'remote-notification'],
         ITSAppUsesNonExemptEncryption: false,
+        // Without a declared RTL localization iOS treats the app as English-only: natural
+        // text alignment, native menus and alerts stay LTR whatever I18nManager says.
+        // src/utils/rtlUtils.ts pins AppleLanguages to the in-app language to match.
+        CFBundleLocalizations: ['en', 'ar'],
       },
       // Please use the relative path to the google-services.json file
       googleServicesFile: process.env.EXPO_PUBLIC_IOS_GOOGLE_SERVICES_FILE,

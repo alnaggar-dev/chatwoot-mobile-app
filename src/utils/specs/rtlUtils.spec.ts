@@ -15,27 +15,37 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   default: { getItem: jest.fn(async () => null), setItem: jest.fn(), removeItem: jest.fn() },
 }));
 
+// RN's Settings requires the native module at import; the spec spies on Settings itself.
+jest.mock('react-native/Libraries/Settings/NativeSettingsManager', () => ({
+  __esModule: true,
+  default: { getConstants: () => ({ settings: {} }), setValues: jest.fn() },
+}));
+
 /**
  * Loads rtlUtils the way a JS VM that started with the given native direction
  * would. The module captures I18nManager.isRTL once at import, so a static
  * import cannot model a launch — each test resets the registry and re-requires
  * (babel keeps `import()` native here, which Jest cannot run).
+ * `appleLanguages` is what NSUserDefaults reports: the app's own override when
+ * one was written, the device list otherwise.
  */
-const launchWith = (isRTL: boolean) => {
+const launchWith = (isRTL: boolean, appleLanguages: string[] = ['en-US']) => {
   jest.resetModules();
   /* eslint-disable @typescript-eslint/no-require-imports */
-  const { I18nManager }: typeof ReactNative = require('react-native');
+  const { I18nManager, Settings }: typeof ReactNative = require('react-native');
   jest.replaceProperty(I18nManager, 'isRTL', isRTL);
   jest.spyOn(I18nManager, 'allowRTL').mockImplementation(() => {});
   jest.spyOn(I18nManager, 'forceRTL').mockImplementation(() => {});
   jest.spyOn(I18nManager, 'swapLeftAndRightInRTL').mockImplementation(() => {});
+  jest.spyOn(Settings, 'get').mockReturnValue(appleLanguages);
+  jest.spyOn(Settings, 'set').mockImplementation(() => {});
   const utils: typeof RtlUtils = require('../rtlUtils');
   const restart: jest.Mock = require('react-native-restart').default.restart;
   const flush: jest.Mock = require('@/store').persistor.flush;
   const storage: Record<'getItem' | 'setItem' | 'removeItem', jest.Mock> =
     require('@react-native-async-storage/async-storage').default;
   /* eslint-enable @typescript-eslint/no-require-imports */
-  return { ...utils, I18nManager, restart, flush, storage };
+  return { ...utils, I18nManager, Settings, restart, flush, storage };
 };
 
 afterEach(() => {
@@ -133,6 +143,43 @@ describe('restartForLocaleDirection', () => {
 
     expect(flush).not.toHaveBeenCalled();
     expect(restart).not.toHaveBeenCalled();
+  });
+});
+
+describe('native app language (AppleLanguages)', () => {
+  it('pins the app language to the picked one when the device prefers another', async () => {
+    // The device lists English first, the user picks Arabic in the app.
+    const { restartForLocaleDirection, Settings } = launchWith(false, ['en-SA', 'ar-SA']);
+
+    await restartForLocaleDirection('ar');
+
+    expect(Settings.set).toHaveBeenCalledWith({ AppleLanguages: ['ar'] });
+  });
+
+  it('re-pins when the language changes without a direction change', async () => {
+    const { restartForLocaleDirection, Settings, restart } = launchWith(false, ['en']);
+
+    await restartForLocaleDirection('pt_BR');
+
+    expect(Settings.set).toHaveBeenCalledWith({ AppleLanguages: ['pt'] });
+    expect(restart).not.toHaveBeenCalled();
+  });
+
+  it('leaves the defaults alone when the language already matches', async () => {
+    const { repairLocaleDirectionAtLaunch, Settings } = launchWith(true, ['ar-SA', 'en-SA']);
+
+    await repairLocaleDirectionAtLaunch('ar');
+
+    expect(Settings.set).not.toHaveBeenCalled();
+  });
+
+  it('repairs a launch whose app language disagrees with the saved one', async () => {
+    // A device switched to Arabic while the app is kept in English.
+    const { repairLocaleDirectionAtLaunch, Settings } = launchWith(false, ['ar-SA']);
+
+    await repairLocaleDirectionAtLaunch('en');
+
+    expect(Settings.set).toHaveBeenCalledWith({ AppleLanguages: ['en'] });
   });
 });
 
