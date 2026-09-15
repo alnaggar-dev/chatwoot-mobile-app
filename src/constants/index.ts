@@ -195,7 +195,7 @@ export const URL_REGEX = {
   CONVERSATION: 'app/accounts/[-0-9]+/conversations/[-0-9]',
 };
 
-export const SSO_CALLBACK_URL = 'foxdeskapp://auth/saml';
+export const SSO_CALLBACK_URL = 'foxdeskaiapp://auth/saml';
 
 export const CONVERSATION_TOGGLE_STATUS = {
   open: 'RESOLVE',
