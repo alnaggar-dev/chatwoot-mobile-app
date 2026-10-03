@@ -1,53 +1,102 @@
 ---
 name: upstream-port
-description: Integrate upstream commit-by-commit onto custom/main with ./.fork/port.sh — `plan` forecasts the backlog, `run` batches the ports and pauses only where judgment is needed, preserving fork changes; no merge.
+description: Merge the next upstream release into the trunk through a port/<date> branch — resolve conflicts, regenerate, probe the ledger's tripwires, journal, then land the exact SHA CI tested. Also dry-runs a port and reverts or reapplies a landed one.
+disable-model-invocation: true
 ---
 
-You are working on a personal fork that integrates upstream **commit by commit**, never by merging. The driver `./.fork/port.sh` owns the mechanics — cherry-picks, pointer, scoped gates, lockfiles, journal facts; your job is judgment at the points it PAUSES: real conflicts, and clean picks that touch registered customizations. Follow the Fork Maintenance section of your agent memory (AGENTS.md).
+Merge one upstream release (a tag matching **Release tags** on `<upstream>`, never an unreleased development branch; oldest first; never cherry-picked) into a `port/<date>` branch cut from `origin/<trunk>`, then land the SHA CI tested. `<trunk>` is never rewritten. Stop only to ask, saying where the port stands. `<trunk>`, `<upstream>` and every bold key are read from `.omp/rules/commands.md`; a step whose key is `none` is skipped, a missing or placeholder key is asked for once.
 
-Why a pointer, not a merge: there is no merge ancestry to say how far upstream you are, so `.fork/UPSTREAM` records the last ported upstream SHA. `port.sh` advances it in the *same* commit as each port and writes a `Fork-Flow-Port: <sha>` trailer — that trailer (never a staged pointer file) is what the gate and `audit.sh` trust to recognize a port.
+Arguments: `[target=<tag|<upstream>|sha>] [dry-run [base=<rev>]]`, or `revert <N|sha>`. `target` defaults to the oldest release not yet merged.
 
-Setup:
-- Refuse to start on a dirty tree (port.sh refuses too). Switch to custom/main, pull with --ff-only, `git fetch --no-tags upstream`.
-- Fresh clone: wire the per-clone config first — `./.fork/setup.sh` (`--check` to inspect). Unwired, the hooks are silently off: port.sh still gates its own commits inline, but manual commits/merges are ungated. setup.sh CHAINS any hook manager the project already uses (husky, lefthook, real `.git/hooks` files — including a DORMANT `.husky/` on a clone that never installed dependencies): the gate runs first, then the project's hooks. Managers that re-point `core.hooksPath` on dependency installs UN-WIRE the kit — verify.sh and port.sh warn; re-run `./.fork/setup.sh`.
-- **Chained project hooks can REWRITE port commits** (a pre-commit formatter running `eslint --fix` + `git add`), making ported content stop matching upstream — noisier future conflicts, degraded patch-id hints. port.sh sets `FORK_FLOW_PORT=1` on every port/unport commit and WARNS after any commit a hook rewrote: tell the user and propose guarding the project's hook (`[ -n "$FORK_FLOW_PORT" ] && exit 0`, or the manager's skip mechanism). Never silently keep porting through a rewriting hook.
-- Confirm the driver isn't stale: `bash <kit>/install.sh --check` when a kit checkout is handy; on drift, `--update` before porting.
-- Empty `.fork/UPSTREAM` (never ported): agree the starting upstream SHA with the user, then `./.fork/port.sh init <sha> [upstream-ref]`.
+Routes, first match wins:
 
-Forecast, then fan out:
-- `./.fork/port.sh plan` — a read-only forecast of the backlog: per commit `clean` / `empty` / `conflict(files)` / `+flag(registry entries)`, and the expected pause count. (`plan --range <tag>` forecasts a catch-up squash instead.)
-- When the backlog is large, check upstream's security advisories (`gh api /repos/<owner>/<repo>/security-advisories`, Dependabot alerts) and `pick` the fix commits before the leisurely catch-up.
-- Agent consumers SHOULD read `./.fork/port.sh plan --porcelain` and, at a pause, the file at `$(git rev-parse --git-path fork-flow-pause)` (`kind=`, `sha=`, `files=`, `entries=`) instead of scraping banner prose.
-- If the plan shows conflicts or flags AND your harness can run parallel subagents (a Task tool or similar), pre-analyze the interesting commits in parallel — one READ-ONLY analyst per conflict/flag commit. Each reads: `git show <sha>`; for a structural/behavioral change the upstream **PR and linked issue** (find it from the `(#N)` in the subject or `gh pr list --search <sha>`, owner/repo from `git remote get-url upstream`; a direct-push commit has no PR — use the commit body and diff); `./.fork/conflict-context.sh <sha> <file>` for each forecast file; and the CHANGES.md entries flagged. Each returns a compact brief: what upstream changed and why, what the fork must preserve, the resolution shape. No subagent support → skip this; do the same reading at each pause.
+- `dry-run` → `.fork/port-dry-run.sh [target=..] [base=..]`; report what it prints (exit 4: `./.fork/setup.sh --check` or the **Port preflight** command failed, report its message; a reapply alone it reports as needing the operator's yes). It changes nothing.
+- any `refs/heads/port/*` or `origin/port/*` → resume: step 1 runs `.fork/port-status.sh` first.
+- `revert` argument, a `port/revert-*` branch, or an unmatched `port-reverted:` line → `REVERT.md`.
 
-Port:
-- `./.fork/port.sh run` — the script loops the backlog oldest-first; every port is still its own trailered, gated, individually revertible commit. You act only when it stops:
-  - Clean non-registry picks flow straight through. Their per-commit gate is SCOPED to what each commit touched; the batch end re-runs the FULL registry plus touched entries' `Test:` commands (`verify.sh --scoped`), so nothing is pushed on scoped checks alone.
-  - Lockfile conflicts auto-resolve (upstream's side + the ecosystem's own re-resolve, staged and journaled); matching `.fork/REGEN` rules use the same take-theirs + regenerate + stage contract with project-defined commands. A hand-merged lockfile only ever LOOKS right. `--no-lockfile-auto` / `FORK_FLOW_NO_LOCKFILE_AUTO=1` disables both and restores the manual recipe: `git checkout --theirs -- <lockfile>`, re-run the install so YOUR dependencies re-resolve on top, `git add`.
-  - Empty picks (change already present) advance the pointer honestly — the backlog shrinks.
-- **CONFLICT pause**: understand BEFORE resolving — consume the pre-flight brief, or read now (`git show`, the PR for structural changes, `./.fork/conflict-context.sh <sha> <file>` — the banner prints the exact command). Re-apply your customization onto upstream's NEW design — match the new structure and behavior; never force the old shape back, and never silently take upstream and drop the custom behavior. The banner also lists registry entries this commit touches: drift-check them while you are in the files.
-  - **rerere replays past resolutions — including bad ones.** Paths under **rerere AUTO-RESOLVED** in the banner carry NO conflict markers on purpose (autoUpdate is forced off; they are left unmerged): each is an unreviewed PROPOSAL, not a resolution. Check every one against what upstream changed before `git add`; wrong or stale → `git rerere forget <file>`, then `git checkout -m -- <file>` and resolve fresh (committing re-records the right resolution). NEVER bulk-`git add` past that banner.
-  - Many conflicted files (typical in a `range` catch-up)? With subagent support, parallelize the resolution: group files by topic, one subagent per group, each given the shared brief and the conflict-context commands; you REVIEW every resolution before staging — cross-file coherence is YOUR job, not theirs, and the rerere-banner rule still applies to every path. Then `git add` each file and `./.fork/port.sh continue`.
-- **REGISTRY pause** (a clean apply touching registered entries — the most dangerous port: nothing conflicts, yet a function your fork depends on changed): drift-check each listed entry — LSP definition/hover when a symbol moved or the file is large — and keep a short verdict for the journal. If the customization moved or its coverage changed, update its CHANGES.md entry (Touches/Symbols/Verify/`Test:`) and stage it. Then `./.fork/port.sh continue`.
-- Gate failure stops the batch: a customization did not survive — fix it (or the port), stage, `continue`. `FORK_SKIP_VERIFY=1` only with the user's explicit say-so.
-- After every `continue`, re-run `./.fork/port.sh run`: the batch state persists, keeps accumulating, and finishes with the scoped verify and ONE fact entry in `.fork/PORTS.md`. `--until` and `--no-lockfile-auto` persist across a pause-resume, so bare `run` resumes with the same contract; `--limit` is per-invocation only.
+Hard guardrails: never commit on or push to `<trunk>` except step 10's SHA-bound land; never rebase it; never force-push; never squash-merge; never `gh pr merge` a port; never `git reset --hard`, `git stash drop`, or `git checkout -- <file>` outside a merge (during one, `git checkout --theirs|--ours|-m <file>` takes a side or restores a conflict, and `git checkout -- <path>` restores the staged version); never `--no-verify` without the user's say-so. `FORK_FLOW_PORT=1` prefixes every command that commits upstream's code on a port branch: the merge and its commit, a revert and its `--continue`, the reapply-alone commit, a catch-up merge and its commit. The hook reads it from the command that commits and refuses, without it, a merge or revert commit and any commit on a port branch before its port commit (a clean `git revert` runs no hook). Fix commits of fork code (step 8, a red CI run) run without it.
 
-After the run:
-- The script already verified (scoped) and journaled the FACTS. What remains is judgment — parallelize it across subagents when you can:
-  - Fill every `Judgment: (fill in)` line in the run's PORTS.md entry: resolution rationale, drift verdicts, merge=ours reasoning, registry updates.
-  - `./.fork/audit.sh`: the **pointer consistency** section must be clean (ancestor-of-upstream, newest trailer matches, no non-port pointer edits). Review **possibly reimplemented** (patch-id): upstream shipping your customization means `Status: superseded` + the **drop-change** skill — retire BEFORE porting the commit that ships it, so it ports clean. Register UNREGISTERED files with **fork-change**, or delete them.
-  - Explain every **merge=ours divergence** audit reports — name WHY each pin's hidden upstream change is deliberately not adopted; a pin you cannot explain is a drop candidate.
-- Behavior proof: the batch's `verify.sh --scoped` covered every touched entry's `Test:`; the shipped CI workflow re-runs the FULL gate (install + lint + test + build) on push — treat a red run as a failed port. Run the full gate locally only on the user's request or before a release; where it cannot run at all, the scoped `Test:` runs are the honest local substitute — report which entries were behavior-tested and which only presence-checked.
-- Solo clone/direct push: `git push origin custom/main`.
-- Recommended multi-machine-safe landing: port on `port/<date>`, push it, open a PR to `custom/main`, then run `./.fork/port.sh land` after CI; it performs a SHA-bound, non-force push.
+## 1. Map
 
-Edge cases:
-- **Retarget / upstream force-push**: every port refuses when the recorded pointer no longer sits on the line you port from. The ONE sanctioned reset — only with the user's explicit agreement — is `./.fork/port.sh init --force <sha> [ref]` (pick the commit your tree corresponds to, often `git merge-base HEAD <new-ref>`); it commits a fresh Init trailer audit treats as a sequence reset. NEVER hand-edit `.fork/UPSTREAM` — audit flags it as tamper.
-- **Reverting a port**: `./.fork/port.sh revert [<sha>]` un-ports the NEWEST port — gated, rewinds the pointer, records `Fork-Flow-Unport`. Conflicts pause like a port (resolve → `continue`). Newest first; always the subcommand (a bare `git revert` is ungated and leaves audit warnings).
-- **Rejecting an upstream change** (telemetry you refuse, behavior you keep different): you cannot skip a commit — the pointer is contiguous. Two honest shapes: resolve the conflict by keeping your content (the run counts it `empty` and still gates the entry), or port cleanly then land a registered counter-customization via **fork-change** — one `custom:` commit reverting exactly that behavior, entry Reason "intentionally drops upstream X" with a Verify proving it stays gone. Never hand-edit the pointer past a commit.
-- **Out-of-order security fix**: when a backlog commit cannot wait for the leisurely catch-up, use `./.fork/port.sh pick <sha>` — an early port with a `Fork-Flow-Early` trailer; the pointer stays unchanged. Register it immediately with **fork-change**, with a Reason naming the upstream commit; when catch-up reaches that SHA, the normal port lands empty.
-- **Release-tag catch-up** (behind by one or more releases): `git fetch --tags upstream`, `./.fork/port.sh plan --range <oldest-unported-release-tag>`, then `./.fork/port.sh range <tag>` — ONE gated squash commit for the span, one conflict set per file instead of one per upstream touch. Read the release notes/changelog for intent instead of per-commit messages; inspect conflicts with `./.fork/conflict-context.sh <from>..<to> <file>` (the banner prints it). Lockfile auto-resolve and parallel per-file resolution apply exactly as in `run`. Upstream deleting a file you modified (and the mirrors) pauses as a native Git conflict — range uses the same merge machinery as per-commit ports (merge=ours/mergiraf drivers, rerere, rename detection); resolve with `git add` (keep/adapt) or `git rm` (accept the deletion). Then return to per-commit `run`.
-- **Merge commits are ported automatically, as a unit** — `run`/`next` replay the merge's first-parent diff (`cherry-pick -m 1`), which carries every second-parent commit AND any evil-merge resolution living in no single commit. Never hand-cherry-pick them or build your own loop. Inspect a merge's real content with `git diff <merge>^1 <merge>` — a plain `git show` is a combined diff that hides single-parent changes.
-- **Submodules are out of scope**: a port carries submodule pointer bumps, but the registry/gate cannot see inside them — verify a submodule-touching port by hand.
+Resume check first: `.fork/port-status.sh`. Exit 3 → no port branch, go on. Exit 1 → read its message (fetch, `gh`, or `gh repo set-default --view` not origin's repository), fix it, rerun. Else it found one (`refs/heads/port/` or `refs/remotes/origin/port/`) and prints `branch:`, `state:`, `next:` (and `pointer=`, `target=`, `tag=` once a release merge or port commit exists; `tag=` is `<tag>` below, empty → `target`'s short SHA): not checked out → run the `git switch <branch>` it prints, then go on at `next:`. Never cut a second port while one exists. While resuming: never a second `port: upstream` commit; in a catch-up merge `pointer`/`target` come from the port commit (it prints them), never `MERGE_HEAD`; `port/revert-*` → `REVERT.md`; red CI → fix commit without `FORK_FLOW_PORT`, rerun the failing checks locally, push; landed → only step 10's cleanup, skip what is gone. Abandon, only on the operator's word: `git merge --abort` or `git revert --abort`, `git switch <trunk>`, delete the branch locally (`git branch -D`) and on origin.
 
-Report: the pointer's old and new SHA, the plan vs what actually happened (pauses, resolutions, empty picks), drift verdicts, lockfile auto-resolves, CHANGES.md and PORTS.md updates (Judgment lines filled), audit findings (consistency + reimplemented + merge=ours), and verification results (scoped verify + CI gate status).
+`git status --porcelain` must be empty, else stop (unrelated work would ride into the port commit). `gh repo set-default --view` must print the fork's repository (`origin`'s; with two remotes `gh` may pick upstream's repo). Then `.fork/port-map.sh [target=..]` (it fetches `origin` and upstream's tags): it prints `pointer=`, `target=` (the oldest release not merged), `tag=`, the backlog and `pending-reapply=`. Exit 3 → no release to merge: `pending-reapply=none` → stop, else the reapply below; exit 1 → read its message and stop. A later target it prints as `requested: <x>` only with the operator's yes. `<tag>` below is the tag, or the short SHA of a SHA target.
+
+Pending reapply: a `port-reverted: <revert sha>` line with no later `port-reapplied: <revert sha>` (`grep -nE '^port-(reverted|reapplied): ' .fork/PORTS.md`). Empty backlog, nothing pending → stop. Empty backlog, reapply pending (port-map exit 3) → ask the operator whether to reapply the release just reverted; yes → the port is the reapply alone, with the reverted port's range (`REVERT.md`); no → stop. With a newer release the reapply rides along (step 3), no yes needed.
+
+`./.fork/setup.sh --check` must pass (`core.hooksPath` = `.fork/hooks`, `merge.ours.driver` unset, rerere on with `autoUpdate` off, the mergiraf driver: without it a merge gives several times the conflicts, silently; fix: `./.fork/setup.sh`), then the **Port preflight** command (toolchain, installed dependencies).
+
+## 2. Branch
+
+`git switch --no-track -c port/<date> origin/<trunk>` (tracking `<trunk>`, a bare `git push` offers `HEAD:<trunk>`). `<trunk>` is the backup; nothing touches it until step 10.
+
+## 3. Merge
+
+A pending reapply → follow `REVERT.md` before the merge, unless the branch has it (`git log --grep='This reverts commit <revert sha>' origin/<trunk>..HEAD`): git counts a reverted release as merged and never brings its code back by itself. `FORK_FLOW_PORT=1 git revert --no-edit <revert sha>` (conflict → resolve, `FORK_FLOW_PORT=1 git revert --continue --no-edit`); note it for the journal. Then:
+
+```sh
+FORK_FLOW_PORT=1 git -c rerere.autoUpdate=false -c merge.ours.driver=true merge --no-ff --no-commit "$target"
+```
+
+Keep its output: rerere's `Resolved '<path>' using previous resolution.` lines are step 4's replay list. The reapply alone runs `FORK_FLOW_PORT=1 git revert --no-commit <revert sha>` instead of both.
+
+## 4. Resolve conflicts
+
+List: `git -c core.quotePath=false diff --name-only --diff-filter=U`.
+
+- **Rerere replays** stay unstaged. The replay list is only the paths step 3's `Resolved '<path>' …` lines name; after a resume every unstaged conflicted path counts as unreviewed. Never derive it as unmerged paths minus `git rerere remaining`: a binary conflict is missing from `remaining` without any replay, and `git diff` C-quotes a non-ASCII name rerere prints raw. Read each replayed file before staging it, never bulk `git add`. Replayed binaries are byte-checked. Bad replay → `git rerere forget <file> && git checkout -m <file>`.
+- **Lockfiles**: `git checkout --theirs`; once the dependency manifests resolve, the **Install deps** command (then, since an install can re-point `core.hooksPath`, `./.fork/setup.sh --check`, and if it fails `./.fork/setup.sh`), then the **Regenerate lockfiles** command (install first: a lock step can fail on uninstalled dependencies), then check the fork's own dependency pins survived.
+- **Other files**: read both sides. Upstream's: `git log --oneline $pointer..$target -- <file>`; a subject's `(#N)` is its PR, `gh pr view <N> -R <upstream repository>` for anything structural. The fork's: its ledger entry, `git log --grep='^Fork-Flow-Change: <slug>$' -- <file>`, and every fork commit on the file, trailered or not (`git log --oneline $pointer..origin/<trunk> -- <file>`); many fork hunks may predate the trailer.
+  - Sides that do not fight (independent additions, a rename, formatting) → resolve yourself.
+  - Upstream redesigned what a customization changes → carry the customization onto the new design; never drop fork behavior silently.
+  - Intent unclear, or upstream may already have the fix → ask, one question per file: Keep mine / Take upstream / Keep both / Drop mine, upstream has it / Explain. Drop mine → delete or trim that ledger entry in the same resolution, or its Verify blocks step 7.
+- A conflicted file in no entry's Files → add it to the right entry (Files and Tripwire paths) in step 8's fix commit.
+- **Generated files** (the paths **Regenerate generated files** names): never hand-merge; `git checkout --theirs`, regenerated below.
+- **Many conflicts**: group by area, one subagent per group; review every result before staging.
+- **Migration collisions**, before the generated files, when **Migration versions** is not `none`: `<Migration versions> | sort | uniq -d` prints nothing (no two migrations share a version). A collision → renumber the incoming upstream migration, never a fork migration production already ran, and record the rename in a ledger entry (Files: both names; Tripwire paths: upstream's; its Verify names the new file). A duplicate version breaks the regeneration.
+- **Generated files last**, once they are the only unmerged paths (no file the app loads, like config or a dependency manifest, may hold markers: the regeneration would fail on it) and dependencies are installed: `git checkout --theirs <path>`, then that path's command from **Regenerate generated files** (a generator that reads the upstream base takes `pointer` mid-merge, but `target` in a reapply alone, whose history still holds the reverted merge), then revert generator churn the port did not cause. It fails → `git checkout -- <paths it half-wrote>` (the staged versions), `git checkout --theirs <path>`, fix the cause, rerun.
+
+## 5. Stage
+
+A regeneration rewrote a dependency manifest → the **Install deps** and **Regenerate lockfiles** commands again, then `./.fork/setup.sh --check`, and if it fails `./.fork/setup.sh` (an install can re-point `core.hooksPath`). Then the **Post-port step** command, when the merge needs it before the checks (such as migrations).
+
+Stage from git, not tool output (generators print partial lists): review and stage every path `git -c core.quotePath=false diff --name-only` lists. Then `git diff --quiet` passes and `git ls-files -o --exclude-standard` prints nothing: step 1 started clean, so every change is the port's, and the Verifies read the working tree while the commit takes the index.
+
+## 6. Checks before commit
+
+- **Clean merges**: for each customization upstream's diff touches, read the fork's callers and any stateful UI flow around it (a customization can lose behavior without a conflict).
+- **Silent surfaces**: upstream's diff for every path **Silent surfaces** lists; anything the deploy needs (the **Post-port step** included) goes into the journal and the PR body, so `ship` sees it.
+- **`AGENTS.md`**: pinned `merge=ours` for the release merge, which holds only under `-c merge.ours.driver=true`: the key is deliberately absent from git config (`./.fork/setup.sh --check` fails if set), so other merges, step 10's catch-up included, text-merge it, and upstream's `AGENTS.md` changes reach the fork only through this step. `git diff $pointer $target -- AGENTS.md`; empty → `agents-md: none`. Else `grep -n 'agents-md:' .fork/PORTS.md` for earlier verdicts, then one verdict per upstream rule in the journal's words (`adopted` / `rejected` / `covered`). Adopted → `.omp/rules/code-conventions.md`, committed with the journal.
+
+## 7. Commit
+
+`.fork/port-letin.sh $pointer $target` lists staged paths outside upstream's diff, each with its candidate kind (`lockfile`, `generated`, `ledger`, `verify program`, or `other`). Each may stay only as a lockfile, a generated file or its generator churn, an incoming migration step 4 renumbered with its ledger update, a ledger edit, or a Verify program or support file (such as `scripts/verify-*`) of an entry this resolution touched (the hook runs every Verify, so such fixes belong in the port commit). Journal each with why. `other` → judge it: generator churn or a renumbered migration may stay; anything else, or a kind that does not hold for that path, is a customization: `fork-change`, after the merge. Recheck `git diff --quiet` after any later fix. Then `./.fork/setup.sh --check`, and if it fails `./.fork/setup.sh` (a dependency install can re-point `core.hooksPath`, leaving the commit ungated). Then `FORK_FLOW_PORT=1 git commit -m 'port: upstream <tag>'` (reapply alone: `port: reapply upstream <tag>`, the reverted merge's SHA in the body). The hook runs `check.sh`. No pointer file, no trailer: the merge commit records the release.
+
+## 8. Tripwires
+
+Probe the ledger (`.fork/tripwires.sh`; exit 2 → it did not run, fix and rerun):
+
+- `.fork/tripwires.sh hits $pointer $target` → the disturbed entries and their hits; an entry it does not print is untouched.
+- `.fork/tripwires.sh moved $pointer $target`: a Files or Tripwire path upstream renamed (it prints the new path) or deleted → update the entry.
+- `.fork/tripwires.sh paths $target`: a miss (typo, rename) → fix the entry.
+- `.fork/tripwires.sh unregistered <port> $target`, `<port>` = the port commit (`port: upstream <tag>` or `port: reapply upstream <tag>`: `git log -1 -E --format=%H --grep='^port: (reapply )?upstream ' origin/<trunk>..HEAD`), HEAD only right after step 7: lists paths the fork's delta gained outside every Files since the previous port; each goes into the right entry (generator churn: the entry that owns the generator).
+- `.fork/tripwires.sh unchanged $target` → retirement candidates, journaled.
+
+Hits → one read-only `scout` per disturbed entry, all in one batch, given the entry verbatim and the hits: each Must still be true line HOLDS or BROKEN with file and symbol, and whether a Markdown doc in its Files is now wrong. Broken and mechanical → fix in a new commit (code, doc, entry), `custom(port): adapt <what> to upstream <tag>` with a `Fork-Flow-Change: <slug>` line per touched entry. Intent in question → ask.
+
+Run each disturbed entry's Check (`.fork/check.sh --check <slug>…`), one suite at a time: never two suites on one test database.
+
+## 9. Journal
+
+One `.fork/PORTS.md` entry, shaped as its header says: range, conflicts and each resolution, the files step 7 let in and why, ledger verdicts, retirement candidates, `agents-md:` verdicts, deploy notes, a `port-reapplied: <revert sha>` line for a reapply, follow-ups. Commit it with any `code-conventions.md` edit: `chore(fork-flow): journal port upstream <tag>`. Every planned commit lands before the push: each pushed `port/*` revision costs a full CI run. A red-CI fix is still a new commit.
+
+## 10. Push and land
+
+Push once (`git push -u origin HEAD`); open the PR to `<trunk>` titled `chore: port upstream <tag>` (a conventional title check wants a conventional type; `port:` and `custom:` fail), deploy notes in its body. The full suite must run on it: **Full suite in CI** `add label <x>` → add that label; `none` → run the **Full suite (local)** command before landing. Wait for every check, `registry-gate` included (a ruleset may refuse a push whose SHA lacks it). Land by SHA: **Deploy** `automatic on merge` with **Promote** `none` → item 1's push is the production deploy: before it, `ship` step 8's migration check on `<sha>`, then ask "Push to `<trunk>` now? This deploys production." quoting the sha, the full-suite result and those migrations. No → stop: the PR stays open, nothing landed.
+
+1. `.fork/port-land.sh <N>`: checks every check's latest run passed (SUCCESS, NEUTRAL or SKIPPED, `registry-gate` among them) and, unless **Full suite in CI** is `none`, that every full-suite check its second value names ran and succeeded (skipped or missing is not green) on the PR head, and that the local head equals it; pushes `<sha>:refs/heads/<trunk>` (never force, never `gh pr merge`), waits until the PR shows `MERGED` (a port branch deleted first can leave it `CLOSED`), fast-forwards `<trunk>`, deletes the port branch, prints "Production: run `/ship <N>`" (it watches the automatic deploy, or runs **Deploy** / **Promote** with their own approval). Tell the operator that line; never run it. Exit 3 → item 2. If a land stopped partway, rerun it: a MERGED PR whose head is on `origin/<trunk>` gets only the cleanup. Any other failure → read its message and stop.
+2. `<trunk>` moved: `FORK_FLOW_PORT=1 git merge --no-edit origin/<trunk>` (no `-c` flag, so `AGENTS.md` text-merges; conflict → resolve, rerun step 7's checks against `origin/<trunk>`, not `HEAD`: `git diff --cached --name-only --no-renames origin/<trunk>`; `FORK_FLOW_PORT=1 git commit --no-edit`), push, wait, back to 1.
+
+## 11. Report
+
+Seven lines at most: range, conflicts auto-resolved and decided, ledger entries held / fixed / asked, checks run, PR and landed SHA.

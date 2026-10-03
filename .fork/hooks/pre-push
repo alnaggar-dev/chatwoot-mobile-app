@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# fork-flow pre-push: wip commits are never pushed, then the project's own pre-push.
+#
+# Checks every pushed commit not yet on origin for a wip: (or wip(…)) subject; deletes are skipped.
+# stdin: <local ref> <local sha> <remote ref> <remote sha>, replayed to the chained hook.
+z=0000000000000000000000000000000000000000
+input=$(cat)
+while read -r lref lsha rref rsha; do
+  [ -n "$lsha" ] || continue
+  [ "$lsha" = "$z" ] && continue
+  if [ "$rsha" = "$z" ]; then
+    wip=$(git log --format='%h %s' "$lsha" --not --remotes=origin | grep -E '^[0-9a-f]+ wip(:|\()' || true)
+  else
+    wip=$(git log --format='%h %s' "$rsha..$lsha" --not --remotes=origin | grep -E '^[0-9a-f]+ wip(:|\()' || true)
+  fi
+  if [ -n "$wip" ]; then
+    echo "pre-push: refusing to push wip commits to $rref; reword or squash them first:" >&2
+    echo "$wip" >&2
+    exit 1
+  fi
+done <<EOF
+$input
+EOF
+
+# The hooks dir that was in use before, recorded by ./.fork/setup.sh.
+{ [ -z "$input" ] || printf '%s\n' "$input"; } | exec "$(dirname "$0")/_chain" pre-push "$@"

@@ -1,0 +1,3 @@
+#!/bin/sh
+# fork-flow pass-through: the project's own post-rewrite keeps running (see _chain).
+exec "$(dirname "$0")/_chain" post-rewrite "$@"

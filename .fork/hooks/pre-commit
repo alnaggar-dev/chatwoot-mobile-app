@@ -1,23 +1,63 @@
 #!/usr/bin/env bash
-# .fork/hooks/pre-commit — fork-flow integration gate (shared logic in _merge-gate).
-# Fires when you `git commit` to finalize an integration of upstream work or a
-# registry rewrite: a port/unport commit that stages .fork/UPSTREAM (the
-# upstream-port skill), a conflicted cherry-pick finished with --continue
-# (CHERRY_PICK_HEAD), a paused merge (MERGE_HEAD), a port/unport left in progress by
-# port.sh (its state file), or a commit that stages .fork/CHANGES.md (registering /
-# retiring). It is a no-op for ordinary customization commits.
-# Enable once per clone:  ./.fork/setup.sh   (or git config core.hooksPath .fork/hooks)
-# Escape:  git commit --no-verify   (or FORK_SKIP_VERIFY=1 git commit …)
-root="$(git rev-parse --show-toplevel 2>/dev/null)"
-g="$root/.fork/hooks/_merge-gate"
-if [ -x "$g" ]; then "$g" pre-commit || exit $?; fi
-# Chain to a pre-existing hook manager's same-named hook (recorded by setup.sh in
-# fork-flow.chainHooksDir — husky, lefthook, real .git/hooks files) so the project's
-# own hooks keep running: gate first, then theirs — their exit code decides. Never
-# chain back into .fork/hooks (that would recurse).
-chain="$(git config fork-flow.chainHooksDir 2>/dev/null)"
-case "$chain" in "" | .fork/hooks) exit 0 ;; /*) ;; *) chain="$root/$chain" ;; esac
-# refuse to recurse: compare RESOLVED paths (symlinked prefixes alias the same dir)
-[ "$(cd "$chain" 2>/dev/null && pwd -P)" = "$(cd "$root/.fork/hooks" 2>/dev/null && pwd -P)" ] && exit 0
-[ -x "$chain/pre-commit" ] && exec "$chain/pre-commit" "$@"
-exit 0
+# fork-flow pre-commit: the trunk guard, the ledger gate, the port-branch guard, then the project's own pre-commit.
+root="$(git rev-parse --show-toplevel)" || exit 1
+cd "$root" || exit 1
+
+# The **Trunk** value in .omp/rules/commands.md; empty while it is missing or still a placeholder.
+trunk="$(.superflow/bin/fact Trunk 2>/dev/null)" || trunk=
+branch="$(git symbolic-ref -q --short HEAD)"
+
+# fork-flow: <trunk> moves only by landed PRs and ports, so a commit on it is refused.
+if [ -n "$trunk" ] && [ "$branch" = "$trunk" ]; then
+  echo "pre-commit: refusing to commit on $trunk; move the work to a branch: git switch -c <type>/<slug>" >&2
+  exit 1
+fi
+
+# fork-flow: the ledger gate (.fork/check.sh). It runs when this commit stages .fork/CHANGES.md or
+# finishes a merge, cherry-pick or revert with `git commit` or `--continue` (a clean `git revert` or
+# `git cherry-pick` commits without running this hook), before the FORK_FLOW_PORT bypass below, so
+# port commits are gated too. A missing or non-executable check.sh fails the commit instead of skipping it.
+if git diff --cached --name-only | grep -qx '.fork/CHANGES.md' ||
+  git rev-parse -q --verify MERGE_HEAD >/dev/null ||
+  git rev-parse -q --verify CHERRY_PICK_HEAD >/dev/null ||
+  git rev-parse -q --verify REVERT_HEAD >/dev/null; then
+  if [ ! -x .fork/check.sh ]; then
+    echo "pre-commit: .fork/check.sh is missing or not executable; the ledger gate cannot run" >&2
+    exit 1
+  fi
+  # check.sh reads the working tree, but the commit takes the index. A Verify can run any tracked
+  # file, so warn for every staged path that has unstaged edits.
+  git diff --cached --name-only | while IFS= read -r f; do
+    git diff --quiet -- ":(literal)$f" ||
+      echo "pre-commit: warning: $f has unstaged edits; the gate checked the working tree, the commit takes the index" >&2
+  done
+  .fork/check.sh || exit 1
+fi
+
+# fork-flow: on a port/* branch a merge or revert commit carries upstream code, so it needs
+# FORK_FLOW_PORT=1; without it the project's own hook below would reformat upstream files. So does the
+# branch's first port commit when no REVERT_HEAD is left (a reapply alone resumed from its staged
+# changes): until origin/<trunk>..HEAD holds a `port: ` or `Revert "port: ` commit, every commit on
+# port/* is upstream code. Fix commits after it (upstream-port step 8, a red CI run) run without it.
+if [ "${FORK_FLOW_PORT:-}" != 1 ]; then
+  case "$branch" in
+  port/*)
+    if git rev-parse -q --verify MERGE_HEAD >/dev/null || git rev-parse -q --verify REVERT_HEAD >/dev/null; then
+      echo "pre-commit: a merge or revert on a port/* branch needs FORK_FLOW_PORT=1" >&2
+      exit 1
+    fi
+    if [ -n "$trunk" ] && git rev-parse -q --verify "origin/$trunk" >/dev/null &&
+      [ -z "$(git log -1 -E --format=%h --grep='^(port: |Revert "port: )' "origin/$trunk..HEAD")" ]; then
+      echo "pre-commit: no port commit on this port/* branch yet, so this commit carries upstream code: it needs FORK_FLOW_PORT=1" >&2
+      exit 1
+    fi
+    ;;
+  esac
+fi
+
+# fork-flow: skip the project's own hook (formatters) for commits of upstream code on a port branch
+# (FORK_FLOW_PORT=1): it would otherwise rewrite ported upstream files.
+[ "${FORK_FLOW_PORT:-}" = 1 ] && exit 0
+
+# The hooks dir that was in use before, recorded by ./.fork/setup.sh.
+exec .fork/hooks/_chain pre-commit "$@"

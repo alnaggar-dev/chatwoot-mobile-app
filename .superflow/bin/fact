@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# .superflow/bin/fact — print one project fact from .omp/rules/commands.md.
+#
+# usage: .superflow/bin/fact <Key> [<n>]
+#   Reads the first line ``- <Key>: `<value>` `` (key matched exactly) and prints the text
+#   inside its n-th backtick pair (default 1). Works from anywhere in the repository.
+# Exit: 0 value printed (it may be `none`); 1 key missing (or commands.md missing, or the
+# key's line has no n-th backticked value); 2 printed value still a `<…>` placeholder, or
+# usage error.
+# Messages go to stderr. Safe under macOS /bin/bash 3.2.
+set -euo pipefail
+
+usage() {
+	printf 'usage: .superflow/bin/fact <Key> [<n>]\n' >&2
+	exit 2
+}
+{ [ "$#" -eq 1 ] || [ "$#" -eq 2 ]; } && [ -n "$1" ] || usage
+key="$1" nth="${2:-1}"
+case "$nth" in '' | *[!0-9]* | 0*) usage ;; esac
+file="$(git rev-parse --show-toplevel)/.omp/rules/commands.md"
+[ -f "$file" ] || {
+	printf 'fact: .omp/rules/commands.md is missing (the SuperFlow kit'\''s install.sh seeds it)\n' >&2
+	exit 1
+}
+
+# Prints nothing (no line for the key), `-` (the line has no n-th backtick pair) or `=<value>`.
+res="$(awk -v key="$key" -v nth="$nth" '
+	BEGIN { p = "- " key ":"; n = length(p) }
+	{ sub(/\r$/, "") }
+	substr($0, 1, n) == p {
+		rest = substr($0, n + 1)
+		for (k = 1; k <= nth; k++) {
+			i = index(rest, "`")
+			if (i == 0) break
+			rest = substr(rest, i + 1)
+			j = index(rest, "`")
+			if (j == 0) break
+			v = substr(rest, 1, j - 1)
+			rest = substr(rest, j + 1)
+			if (k == nth) { print "=" v; exit }
+		}
+		print "-"
+		exit
+	}
+' "$file")"
+
+case "$res" in
+'')
+	printf 'fact: no "- %s: `…`" line in .omp/rules/commands.md\n' "$key" >&2
+	exit 1
+	;;
+-)
+	printf 'fact: the "- %s:" line in .omp/rules/commands.md has no value %s in backticks\n' "$key" "$nth" >&2
+	exit 1
+	;;
+esac
+value="${res#=}"
+case "$value" in
+'<'*'>')
+	printf 'fact: %s is still a placeholder (%s): fill it in .omp/rules/commands.md\n' "$key" "$value" >&2
+	exit 2
+	;;
+esac
+printf '%s\n' "$value"

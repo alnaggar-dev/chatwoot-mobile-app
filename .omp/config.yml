@@ -1,0 +1,7 @@
+# Model roles for the project agents in .omp/agents/ (each agent names its role; skills spawn by agent name, never by model).
+# Roles carry a model only, never a `:level` suffix, so the `thinking-level` in each agent file is the
+# only effort setting in play (final-review pins `high`; the docs do not define how a suffix and a file level combine).
+# Personal retuning: task.agentModelOverrides in ~/.omp/agent/config.yml, with @role aliases.
+modelRoles:
+  task: anthropic/claude-sonnet-5        # the generic subagent role: every un-aliased spawn lands here
+  senior: anthropic/claude-opus-5        # final review (final-review); not `judge`, which is omp's built-in auto-thinking role
