@@ -1,38 +1,26 @@
-# BEGIN fork-flow:gitattributes — managed block; re-run the kit installer to update.
-# Add your OWN merge=ours entries ABOVE this block (outside the markers): updates
-# REPLACE everything between the markers, but any active line above is preserved.
-#
-# merge=ours overrides — LAST RESORT (see your fork memory AGENTS.md, Fork Maintenance).
-#
-# A path listed here keeps YOUR version on every upstream merge and silently
-# hides upstream's changes. Use it only for whole files you intentionally own
-# (branding, generated config). Audit every listed path on each merge, and
-# never use it for one-line edits inside active upstream files — let those
-# conflict so rerere can learn the fix.
-#
-# Requires:  git config merge.ours.driver true   (set during setup)
-# Backstops: ./.fork/brief.sh flags changed merge=ours paths over the range;
-#            ./.fork/verify.sh fails if a listed path matches no tracked file.
-# Globs work (e.g. "*.svg", "assets/**") — both backstops read paths through git.
-#
-# Uncomment and adapt when you actually need one:
-# src/branding/logo.svg     merge=ours
-# src/config/branding.ts    merge=ours
+# BEGIN superflow:fork
+# Fork-owned files pinned merge=ours keep the fork's copy on upstream-port's release
+# merge. The pin only works when that merge runs with -c merge.ours.driver=true: the
+# key is deliberately NOT in git config (./.fork/setup.sh unsets it; ./.fork/setup.sh --check
+# fails if it is set), so every other merge text-merges these paths like any file.
+# A pin hides upstream's changes, so upstream-port reads upstream's diff of each pinned
+# path by hand at every port; a rename/delete upstream still stops as modify/delete.
+# Pin only whole files the fork owns, never a file with small inline edits (let those
+# conflict so rerere can learn the fix). Globs work. ./.fork/check.sh fails if a
+# pinned path matches no tracked file.
+AGENTS.md merge=ours
 
-# --- Syntax-aware merge via mergiraf (https://mergiraf.org) — ON by default ----
-# A conservative AST merge driver that clears NOISE conflicts (reordered methods,
-# import churn, formatting) and FALLS BACK to conflict markers when unsure, so it
-# never silently mis-merges. The driver lines below are ACTIVE; they take effect
-# once the per-clone driver is registered: run ./.fork/setup.sh (also applied by
-# the kit's install.sh --setup). With the binary:
+# --- Syntax-aware merge via mergiraf (https://mergiraf.org) ---------------------
+# A conservative AST merge driver that clears noise conflicts (reordered methods,
+# import churn, formatting) and falls back to conflict markers when unsure. These
+# lines are active once ./.fork/setup.sh registers the driver in the clone:
 #   git config merge.mergiraf.driver 'mergiraf merge --git %O %A %B -s %S -x %X -y %Y -p %P -l %L'
-# Without it, setup registers a safe Git text-merge fallback. Install Mergiraf with
-# cargo install mergiraf / brew install mergiraf, then re-run setup to activate it.
-# Add/trim the languages your fork edits; full list: mergiraf languages --gitattributes
-# Do NOT route lockfiles or generated files through it — regenerate those instead
-# (the unset lines below pull the lockfiles the globs would capture back out; the
-# lockfile/REGEN recipe, not a structural merge, owns them). NOTE: Vue SFCs are
-# NOT supported by mergiraf — plain text merge applies to *.vue.
+# Without the binary, setup registers git's own text merge instead (./.fork/setup.sh
+# --check then fails until mergiraf is installed: brew install mergiraf, then
+# re-run setup). Full language list: mergiraf languages --gitattributes
+# Lockfiles and generated files are regenerated, never merged (the !merge lines at the
+# end pull lockfiles the globs capture back out). Add a line per lockfile or generated
+# file the project has that a glob above captures.
 *.rs    merge=mergiraf
 *.ts    merge=mergiraf
 *.tsx   merge=mergiraf
@@ -71,5 +59,8 @@
 # Lockfiles the globs above would capture — regenerated, never merged:
 package-lock.json   !merge
 npm-shrinkwrap.json !merge
-pnpm-lock.yaml      !merge
-# END fork-flow:gitattributes
+*-lock.yaml         !merge
+*-lock.yml          !merge
+*.lock.json         !merge
+# The project's own merge lines go below this block (the last matching line wins).
+# END superflow:fork

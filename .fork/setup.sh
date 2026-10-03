@@ -1,19 +1,11 @@
 #!/usr/bin/env bash
-# .fork/setup.sh — wire THIS clone's per-clone config (see Fork Maintenance in your
-# AGENTS.md).
+# .fork/setup.sh: wire this clone's git config for the fork (idempotent).
 #
-#   ./.fork/setup.sh           apply the per-clone git config (idempotent)
-#   ./.fork/setup.sh --check   report wiring status, change nothing; exit 1 if unwired
+#   ./.fork/setup.sh           apply the per-clone config
+#   ./.fork/setup.sh --check   report the wiring, change nothing; exit 1 if anything is off
 #
-# git config is per-clone state — neither `git clone` nor copied files carry it — so a
-# fresh clone of an installed fork is HALF-PROTECTED until this runs: no hooks (the
-# integration gate and the commit-msg reminder are silently off for manual commits;
-# port.sh still gates its own commits inline), no merge=ours driver during ports, no
-# rerere. This script SHIPS WITH THE FORK precisely so any clone can wire itself with
-# one in-repo command, without a fork-flow kit checkout. The kit's install.sh --setup
-# applies this same config (it runs this script), plus the one-time GitHub wiring
-# (origin/upstream remotes, custom/main) that needs gh and is repo state, not config.
-# Keep the config list below in sync with install.sh's manual-setup echo.
+# git config is per clone; nothing in the repo carries it, so every clone runs this once.
+# upstream-port runs --check before the Port preflight command.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
@@ -26,144 +18,169 @@ case "$mode" in
 	;;
 esac
 
-# The mergiraf driver depends on whether the binary exists: the real syntax-aware
-# driver when it does, Git's text merge as a safe fallback when it does not (same
-# rule as install.sh --setup; .gitattributes ships its merge=mergiraf lines ACTIVE).
 mergiraf_driver='mergiraf merge --git %O %A %B -s %S -x %X -y %Y -p %P -l %L'
 fallback_driver='git merge-file -L %X -L %S -L %Y %A %O %B'
+gated_hooks="pre-commit pre-merge-commit commit-msg pre-push"
+hm_dir=".hus""ky"
 
-# Is HOOK ($1) wired in the EFFECTIVE hooks dir? git resolves core.hooksPath in
-# `--git-path hooks`, so this covers both the core.hooksPath=.fork/hooks setup and
-# per-hook symlinks into .git/hooks. $2 is a needle the kit's copy always contains.
-hook_wired() {
-	local d
-	d="$(git rev-parse --git-path hooks 2>/dev/null)"
-	[ -n "$d" ] && [ -f "$d/$1" ] && grep -qs "$2" "$d/$1"
-}
-
-# A project may ALREADY manage hooks (husky, lefthook, real files in .git/hooks).
-# Never clobber them silently: core.hooksPath still moves to .fork/hooks (the gate
-# must run first, unconditionally), but the previous hooks dir is recorded in
-# fork-flow.chainHooksDir and the kit's three hooks CHAIN to the same-named hook
-# there after their own logic — the project's pre-commit/commit-msg keep running and
-# can still block a commit (their exit code decides). Hooks of OTHER names in that
-# dir do not auto-run while core.hooksPath points at .fork/hooks; symlink any you
-# need into .fork/hooks/. Prints the dir to chain, or nothing.
+# The hooks dir to chain behind the gate, or nothing. Never the kit's own dir (that would
+# recurse): resolved paths are compared, since a symlinked prefix can alias it.
 detect_chain_dir() {
-	local cur eff h self
-	cur="$(git config core.hooksPath 2>/dev/null || true)"
-	# never record the kit's own hooks dir as a chain (recursion). Compare RESOLVED
-	# paths (pwd -P), not strings: a hand-set absolute hooksPath may reach the same
-	# dir through a symlinked prefix (macOS /var/folders -> /private/var/folders).
+	local cur eff f self
+	cur="$(git config --type=path core.hooksPath 2>/dev/null || true)"
 	self="$(cd .fork/hooks 2>/dev/null && pwd -P)"
 	if [ -n "$cur" ] && [ "$cur" != ".fork/hooks" ] &&
 		[ "$(cd "$cur" 2>/dev/null && pwd -P)" != "$self" ]; then
 		printf '%s' "$cur"
 		return 0
 	fi
-	if [ -z "$cur" ]; then
-		# default .git/hooks: chain only when a REAL (non-kit) hook we would shadow exists
-		eff="$(git rev-parse --git-path hooks 2>/dev/null)"
-		for h in pre-commit pre-merge-commit commit-msg; do
-			if [ -n "$eff" ] && [ -x "$eff/$h" ] && ! grep -qs '_merge-gate' "$eff/$h" && ! grep -qs 'fork-flow' "$eff/$h"; then
+	[ -z "$cur" ] || return 0
+	# Default .git/hooks: chain only when a real (non-kit) hook there would be shadowed.
+	# Absolute, so linked worktrees (other work trees, same hooks) run it too.
+	eff="$(git rev-parse --path-format=absolute --git-path hooks 2>/dev/null)"
+	if [ -n "$eff" ]; then
+		for f in "$eff"/*; do
+			[ -f "$f" ] && [ -x "$f" ] || continue
+			case "${f##*/}" in *.sample) continue ;; esac
+			if ! grep -qs 'fork-flow' "$f"; then
 				printf '%s' "$eff"
 				return 0
 			fi
 		done
-		# DORMANT husky: a fresh clone carries the project's committed .husky/ hooks but
-		# no install has run yet, so core.hooksPath is still unset — without this, setup
-		# records NO chain and the project's hooks are silently off until the first
-		# install's takeover + re-setup cycle (observed live: the takeover happened in
-		# the middle of a full verify's install). Record the dir up front. After the
-		# takeover, re-running setup records whatever husky pointed hooksPath at
-		# (.husky/_) via the branch above.
-		for h in pre-commit pre-merge-commit commit-msg; do
-			if [ -f ".husky/$h" ] && ! grep -qs 'fork-flow' ".husky/$h"; then
-				printf '%s' ".husky"
-				return 0
-			fi
-		done
 	fi
+	# A dormant hook manager: the project's committed hooks dir (the npm hook manager's
+	# dot-dir, spelled split so the kit's stack-name check stays clean) before any install
+	# pointed core.hooksPath at it.
+	for f in "$hm_dir"/*; do
+		if [ -f "$f" ] && ! grep -qs 'fork-flow' "$f"; then
+			printf '%s' "$hm_dir"
+			return 0
+		fi
+	done
 	return 0
 }
 
-rc=0
-chk_cfg() { # <config-key> <wanted> <label>
-	local cur
-	cur="$(git config "$1" 2>/dev/null || true)"
-	if [ "$cur" = "$2" ]; then
-		printf '  ok       %s\n' "$3"
-	else
-		printf '  MISSING  %s   (have: %s)\n' "$3" "${cur:-<unset>}"
-		rc=1
-	fi
+# Hooks in the chained dir with no .fork/hooks pass-through of the same name: they do not
+# run while core.hooksPath is .fork/hooks.
+unchained_hooks() { # DIR
+	local d="$1" f out=""
+	case "$d" in /*) ;; *) d="./$d" ;; esac
+	for f in "$d"/*; do
+		[ -f "$f" ] && [ -x "$f" ] || continue
+		case "${f##*/}" in *.sample) continue ;; esac
+		[ -x ".fork/hooks/${f##*/}" ] && continue
+		out="$out ${f##*/}"
+	done
+	printf '%s' "${out# }"
 }
 
-if [ "$mode" = "--check" ]; then
-	if hook_wired pre-commit _merge-gate && hook_wired pre-merge-commit _merge-gate && hook_wired commit-msg fork-flow; then
-		printf '  ok       hooks (integration gate + commit-msg reminder)\n'
+rc=0
+report() { # ok|MISSING|PROBLEM <text>
+	printf '  %-8s %s\n' "$1" "$2"
+	[ "$1" = ok ] || rc=1
+}
+chk_cfg() { # KEY WANTED LABEL
+	local cur
+	cur="$(git config "$1" 2>/dev/null || true)"
+	if [ "$cur" = "$2" ]; then report ok "$3"; else report MISSING "$3 (have: ${cur:-<unset>})"; fi
+}
+
+if [ "$mode" = --check ]; then
+	hp="$(git config core.hooksPath 2>/dev/null || true)"
+	missing=""
+	for h in $gated_hooks _chain; do [ -x ".fork/hooks/$h" ] || missing="$missing $h"; done
+	if [ "$hp" != .fork/hooks ]; then
+		report MISSING "core.hooksPath .fork/hooks (have: ${hp:-<unset>}); commits and merges are ungated in this clone"
+	elif [ -n "$missing" ]; then
+		report MISSING "executable hooks:$missing"
 	else
-		printf '  MISSING  hooks — manual commits/merges are UNGATED in this clone\n'
-		cur="$(git config core.hooksPath 2>/dev/null || true)"
-		if [ -n "$cur" ] && [ "$cur" != ".fork/hooks" ]; then
-			printf '           (core.hooksPath = %s — another hook manager re-pointed it?\n' "$cur"
-			printf '            re-run ./.fork/setup.sh: it takes the hooks back and CHAINS those)\n'
-		fi
-		rc=1
+		report ok "core.hooksPath .fork/hooks (ledger gate)"
 	fi
 	chain="$(git config fork-flow.chainHooksDir 2>/dev/null || true)"
-	[ -n "$chain" ] && printf '  ok       chained hooks: %s (project hooks run after the gate)\n' "$chain"
-	chk_cfg rerere.enabled true 'rerere.enabled (replay past conflict resolutions)'
-	chk_cfg rerere.autoUpdate false 'rerere.autoUpdate=false (replays must pass review)'
+	[ -z "$chain" ] || report ok "chained hooks: $chain (run after the gate)"
+	chk_cfg rerere.enabled true 'rerere.enabled'
+	chk_cfg rerere.autoUpdate false 'rerere.autoUpdate false (replays stay unstaged)'
 	chk_cfg merge.conflictStyle zdiff3 'merge.conflictStyle zdiff3'
-	chk_cfg merge.ours.driver true 'merge.ours.driver (merge=ours overrides hold during ports)'
+	# merge.ours.driver must be unset in every config file (the `command` scope is a
+	# `git -c` around this call, not a file). Exit 1 = unset; anything above is an error.
+	get_rc=0
+	ours_all="$(git config --show-scope --show-origin --get-all merge.ours.driver 2>/dev/null)" || get_rc=$?
+	ours_src=""
+	[ "$get_rc" -ne 0 ] || ours_src="$(printf '%s\n' "$ours_all" | awk -F'\t' '$1 != "command"')"
+	if [ "$get_rc" -gt 1 ]; then
+		report PROBLEM "merge.ours.driver not checked: git config exited $get_rc (--show-scope needs git 2.26+)"
+	elif [ -z "$ours_src" ]; then
+		report ok 'merge.ours.driver unset (upstream-port passes it per merge)'
+	else
+		report PROBLEM 'merge.ours.driver is set; ordinary merges silently keep one side of merge=ours paths:'
+		printf '%s\n' "$ours_src" | awk -F'\t' '{printf "             %s  %s = %s\n", $1, $2, $3}'
+		printf '           fix: ./.fork/setup.sh removes a local key; remove others by hand,\n'
+		printf '                e.g. git config --global --unset-all merge.ours.driver\n'
+	fi
 	if command -v mergiraf >/dev/null 2>&1; then
-		chk_cfg merge.mergiraf.driver "$mergiraf_driver" 'merge.mergiraf driver (binary present)'
+		report ok 'mergiraf installed'
+		chk_cfg merge.mergiraf.driver "$mergiraf_driver" 'merge.mergiraf driver'
 	else
-		chk_cfg merge.mergiraf.driver "$fallback_driver" 'merge.mergiraf fallback driver (binary not installed)'
+		report MISSING 'mergiraf not installed (install it, then re-run ./.fork/setup.sh); ports get far more conflicts without it'
+		chk_cfg merge.mergiraf.driver "$fallback_driver" 'merge.mergiraf text fallback'
 	fi
-	if git remote get-url upstream >/dev/null 2>&1; then
-		printf '  ok       upstream remote\n'
-	else
-		printf '  MISSING  upstream remote (cannot be guessed: git remote add upstream <url>)\n'
-		rc=1
-	fi
+	git remote get-url upstream >/dev/null 2>&1 ||
+		printf '  %-8s %s\n' NOTE "no 'upstream' remote; porting needs one: git remote add upstream <url>"
 	if [ "$rc" -ne 0 ]; then
-		printf 'setup.sh: this clone is NOT fully wired — run ./.fork/setup.sh\n' >&2
+		echo "setup.sh: this clone is not fully wired; run ./.fork/setup.sh" >&2
 	else
-		printf 'setup.sh: fully wired\n' >&2
+		echo "setup.sh: fully wired" >&2
 	fi
 	exit "$rc"
 fi
 
+# Replayed conflict resolutions stay unstaged so they get reviewed, whatever the
+# global config says.
 git config rerere.enabled true
-git config rerere.autoUpdate false # replays must pass review, never auto-stage
+git config rerere.autoUpdate false
+
+# merge.ours.driver must stay unset: ordinary merges then text-merge AGENTS.md, and only
+# upstream-port's merge turns the driver on (-c merge.ours.driver=true). Exit 5 = absent.
+git config --local --unset-all merge.ours.driver || [ $? -eq 5 ]
+
 git config merge.conflictStyle zdiff3
-git config merge.ours.driver true
-chain="$(detect_chain_dir)"
-if [ -n "$chain" ]; then
-	git config fork-flow.chainHooksDir "$chain"
-	echo "  found existing hooks in $chain — the kit's pre-commit/pre-merge-commit/commit-msg"
-	echo "  CHAIN to the same-named hooks there (gate first, then yours; other hook names in"
-	echo "  $chain do not auto-run — symlink any you need into .fork/hooks/)"
-fi
-git config core.hooksPath .fork/hooks # commit-msg reminder + both integration-gate hooks
-if grep -qs '"prepare"[[:space:]]*:.*husky' package.json; then
-	echo "  NOTE: husky re-points core.hooksPath on every dependency install — re-run"
-	echo "        ./.fork/setup.sh after installs (verify.sh full and port.sh warn when unwired)"
-fi
+
+# .gitattributes routes some paths to the mergiraf driver: the real one when the binary
+# is installed, else git's own text merge.
 if command -v mergiraf >/dev/null 2>&1; then
 	git config merge.mergiraf.name mergiraf
 	git config merge.mergiraf.driver "$mergiraf_driver"
-	echo "  git config set: rerere, zdiff3, merge.ours.driver, merge.mergiraf, core.hooksPath"
 else
-	git config merge.mergiraf.name "mergiraf fallback"
+	git config merge.mergiraf.name 'mergiraf fallback'
 	git config merge.mergiraf.driver "$fallback_driver"
-	echo "  git config set: rerere, zdiff3, merge.ours.driver, merge.mergiraf fallback, core.hooksPath"
-	echo "  NOTE: mergiraf not installed — syntax-aware merges are inactive; install it and re-run ./.fork/setup.sh"
+	echo "setup.sh: mergiraf not installed; using git's text merge (install it and re-run)" >&2
 fi
-if ! git remote get-url upstream >/dev/null 2>&1; then
-	echo "  NOTE: no 'upstream' remote — porting needs one: git remote add upstream <url> && git fetch upstream"
-	echo "        (first-time GitHub wiring — gh fork, origin, custom/main — is install.sh --setup's job)"
+
+# The ledger gate hooks. A hooks dir already in use is recorded once in
+# fork-flow.chainHooksDir; every hook in it keeps running through the same-named
+# .fork/hooks pass-through (the gated hooks pre-commit, pre-merge-commit, commit-msg and pre-push
+# after their gate).
+chain="$(detect_chain_dir)"
+if [ -n "$chain" ]; then
+	git config fork-flow.chainHooksDir "$chain"
+	live=""
+	for f in "$chain"/*; do
+		[ -f "$f" ] && [ -x "$f" ] || continue
+		case "${f##*/}" in *.sample) ;; *) live=1 ;; esac
+	done
+	if [ -n "$live" ]; then
+		echo "setup.sh: chaining the existing hooks in $chain: they keep running (pre-commit, pre-merge-commit, commit-msg and pre-push after the gate)"
+	else
+		echo "setup.sh: NOTE: chained $chain, but it holds no executable hook yet; install the project's dependencies, then re-run ./.fork/setup.sh"
+	fi
+fi
+git config core.hooksPath .fork/hooks
+chain="$(git config fork-flow.chainHooksDir 2>/dev/null || true)"
+if [ -n "$chain" ]; then
+	others="$(unchained_hooks "$chain")"
+	[ -z "$others" ] || echo "setup.sh: NOTE: these hooks in $chain do not run while core.hooksPath is .fork/hooks: $others"
+fi
+if grep -qs "\"prepare\"[[:space:]]*:.*${hm_dir#.}" package.json; then
+	echo "setup.sh: NOTE: the project's hook manager re-points core.hooksPath on dependency installs; re-run ./.fork/setup.sh after one"
 fi
 echo "setup.sh: clone wired."

@@ -1,33 +1,14 @@
-# fork-flow CI gate — the SERVER-SIDE backstop for the client-side hooks.
+# fork-flow CI gate: the server-side backstop for the client-side hooks.
 #
-# The git hooks are per-clone and bypassable (--no-verify, FORK_SKIP_VERIFY=1, a
-# clone that never ran ./.fork/setup.sh, a hook manager re-pointing core.hooksPath
-# during an install). This workflow re-runs the gate on every push/PR to
-# custom/main, so a commit that slipped past the local gate cannot land silently
-# broken.
+# The fork hooks run ./.fork/check.sh locally (.fork/hooks), but hooks are per clone and can be
+# skipped (--no-verify, a clone that never ran ./.fork/setup.sh). This
+# workflow runs the same ./.fork/check.sh (every ledger Verify plus the merge=ours pin
+# check) on every push and PR to custom/main, so nothing lands past a broken ledger.
+# Verifies are install-free presence checks; lint and tests run elsewhere.
 #
-# MODE (repo variable FORK_FLOW_CI_GATE; Settings -> Secrets and variables ->
-# Actions -> Variables — a repo variable survives kit updates, this FILE does not):
-#   full (default)  ./.fork/verify.sh — install + lint + test + build + registry.
-#                   This is the from-scratch backstop that EARNS the fast local
-#                   workflow: `port.sh run` gates each commit scoped to what it
-#                   touched and ends with `verify.sh --scoped` (registry + touched
-#                   entries' Test:), never a full local build. CI is where the
-#                   full proof runs.
-#   registry        ./.fork/verify.sh --registry — install-free presence checks
-#                   only (every Verify is sub-second on a bare clone BY CONTRACT).
-#                   Set this when the full gate cannot run on a hosted runner
-#                   (provisioned DB, huge install) — then run the full gate
-#                   somewhere yourself before releases.
-#
-# Toolchain: `corepack enable` covers pnpm/yarn pins. Anything more (bun, custom
-# services) belongs in .github/fork-flow-ci-setup.sh — a CONSUMER-owned hook this
-# workflow runs when present (kit installs never touch .github/*.sh).
-#
-# NOTE: GitHub disables workflows on a fresh fork until you enable them once (the
-# fork's Actions tab). Off GitHub this file is inert.
-#
-# Kit-owned: refreshed by the kit installer on every install/update.
+# A branch ruleset on custom/main may require the check named `registry-gate`: that is the job id
+# below (it has no `name:`). Changing the id or adding a `name:` renames the check
+# and blocks every merge and every land.
 name: fork-flow gate
 on:
   push:
@@ -38,20 +19,22 @@ on:
 permissions:
   contents: read
 jobs:
-  registry-gate: # id kept stable across kit versions (required-checks configs pin it)
+  registry-gate: # required check name; keep the id and add no name:
     runs-on: ubuntu-latest
     env:
-      FORK_FLOW_CI_GATE: ${{ vars.FORK_FLOW_CI_GATE || 'full' }}
+      # PR github.sha is the synthetic merge; landing is bound to the immutable head.
+      FORK_FLOW_EXPECTED_SHA: ${{ github.event_name != 'pull_request' && github.sha || github.event.pull_request.head.sha }}
     steps:
       - uses: actions/checkout@v4
-      - name: toolchain (corepack + optional consumer setup hook)
+        with:
+          ref: ${{ env.FORK_FLOW_EXPECTED_SHA }}
+      - name: verify checkout identity
         run: |
-          corepack enable 2>/dev/null || true
-          if [ -x .github/fork-flow-ci-setup.sh ]; then ./.github/fork-flow-ci-setup.sh; fi
-      - name: fork-flow gate (full by default; FORK_FLOW_CI_GATE=registry to narrow)
-        run: |
-          if [ "$FORK_FLOW_CI_GATE" = "registry" ]; then
-            ./.fork/verify.sh --registry
-          else
-            ./.fork/verify.sh
+          actual_sha="$(git rev-parse HEAD)"
+          printf 'fork-flow expected SHA: %s\nfork-flow actual SHA: %s\n' "$FORK_FLOW_EXPECTED_SHA" "$actual_sha"
+          if [ -z "$FORK_FLOW_EXPECTED_SHA" ] || [ "$actual_sha" != "$FORK_FLOW_EXPECTED_SHA" ]; then
+            echo "::error::fork-flow checkout identity mismatch"
+            exit 1
           fi
+      - name: fork-flow gate
+        run: ./.fork/check.sh

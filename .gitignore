@@ -46,3 +46,6 @@ GoogleService-Info.plist
 foxdesk-ai-*.json
 *-adminsdk-*.json
 *service-account*.json
+features/*
+!features/.gitkeep
+.superflow/PENDING

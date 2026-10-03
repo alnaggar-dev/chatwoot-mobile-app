@@ -1,0 +1,18 @@
+#!/bin/sh
+# .fork/hooks/_chain <hook> [args...]: run the same-named hook in fork-flow.chainHooksDir (the
+# hooks dir that was in use before ./.fork/setup.sh pointed core.hooksPath here), with the
+# hook's args and stdin, and exit with its status. Nothing to chain → exit 0.
+# Never chains to this dir itself (that would recurse); resolved paths are compared.
+name=$1
+shift
+chain="$(git config fork-flow.chainHooksDir 2>/dev/null)"
+case "$chain" in "" | .fork/hooks) exit 0 ;; /*) ;; *)
+	root="$(git rev-parse --show-toplevel 2>/dev/null)" || root=
+	# A relative dir is relative to the work tree; a bare context has none.
+	[ -n "$root" ] || exit 0
+	chain="$root/$chain" ;;
+esac
+self="$(cd "$(dirname "$0")" && pwd -P)"
+[ "$(cd "$chain" 2>/dev/null && pwd -P)" = "$self" ] && exit 0
+[ -x "$chain/$name" ] && exec "$chain/$name" "$@"
+exit 0
