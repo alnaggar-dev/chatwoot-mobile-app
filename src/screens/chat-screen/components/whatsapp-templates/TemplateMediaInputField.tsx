@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Image, KeyboardTypeOptions, View } from 'react-native';
+import { I18nManager, Image, KeyboardTypeOptions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 
@@ -33,6 +33,7 @@ const TemplateMediaInputField = ({
   const [errored, setErrored] = useState(false);
   const trimmed = value.trim();
   const showPreview = withImagePreview && trimmed.length > 0;
+  const isUrlField = keyboardType === 'url';
 
   useEffect(() => {
     setErrored(false);
@@ -42,7 +43,7 @@ const TemplateMediaInputField = ({
     <View style={tailwind.style('mt-6')}>
       <Animated.Text
         style={tailwind.style(
-          'mb-3 text-[15px] font-inter-medium-24 tracking-[0.225px] text-gray-500',
+          'mb-3 text-[15px] font-inter-medium-24 tracking-[0.225px] text-ink-muted text-left',
         )}>
         {label}
       </Animated.Text>
@@ -52,24 +53,25 @@ const TemplateMediaInputField = ({
         onFocus={onFocus}
         onBlur={onBlur}
         placeholder={placeholder}
-        placeholderTextColor={tailwind.color('text-gray-500')}
+        placeholderTextColor={tailwind.color('text-ink-muted')}
         autoCapitalize="none"
         autoCorrect={false}
         keyboardType={keyboardType}
         style={tailwind.style(
-          'px-3 py-2 rounded-[10px] border text-base font-inter-420-20 text-gray-950',
-          isFocused ? 'border-blue-700' : 'border-blackA-A4',
+          'px-3 py-2 rounded-control border text-base font-inter-420-20 text-ink',
+          I18nManager.isRTL && !isUrlField && 'text-right',
+          isFocused ? 'border-brand' : 'border-outline',
         )}
       />
       {showPreview && (
         <View
           style={tailwind.style(
-            'mt-3 aspect-video rounded-[10px] overflow-hidden bg-gray-50 items-center justify-center',
+            'mt-3 aspect-video rounded-control overflow-hidden bg-surface-subtle items-center justify-center',
           )}>
           {errored ? (
             <Animated.Text
               style={tailwind.style(
-                'px-4 text-[14px] font-inter-420-20 text-gray-700 text-center',
+                'px-4 text-[14px] font-inter-420-20 text-ink-secondary text-center',
               )}>
               {i18n.t('CONTENT_TEMPLATE.IMAGE_PREVIEW_FAILED')}
             </Animated.Text>

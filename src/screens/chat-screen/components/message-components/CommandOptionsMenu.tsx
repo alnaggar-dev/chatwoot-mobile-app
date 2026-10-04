@@ -233,7 +233,7 @@ const MenuOption = (props: MenuOptionProps) => {
           </Animated.View>
           <Text
             style={tailwind.style(
-              'text-base font-inter-normal-20 leading-[18px] tracking-[0.24px] text-gray-950 pl-5',
+              'text-base font-inter-normal-20 leading-[18px] tracking-[0.24px] text-ink pl-5',
             )}>
             {i18n.t(menuOption.titleKey)}
           </Text>
