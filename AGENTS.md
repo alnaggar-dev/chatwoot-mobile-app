@@ -8,6 +8,7 @@
 | Drive it in the browser | `verify` proves Done-when items in the browser or by tests (used by `flow`) |
 | Docs, then the folder goes | `document` (run by `ship`) |
 | Land it | `ship` |
+| Small direct change (copy, a message, a setting) | edit it, then tell the operator "Run `/ship`." (`ship` reviews code no skill reviewed) |
 | Any bug or perf regression | `diagnose`, then `ship` |
 | Architecture pass | `refactor`, then `ship` |
 | Design spike | `prototype` |
@@ -16,10 +17,10 @@ Skills without a trigger of their own (`verify`, `tdd`, `refactor`, `prototype`)
 
 - Skills live in `.omp/skills/` (links into `.superflow/skills/`); read a skill before running it. Gestures are written `/name`; omp invokes `/skill:name`. After any context compaction, re-read the active skill (`skill://<name>`) before the next write or gate.
 - Project commands and facts: `.omp/rules/commands.md`, one line per key; read it before running any project command. `<trunk>` is its **Trunk** value, `<upstream>` its **Upstream** value. A key that is missing, `none` where a value is required, or still a `<…>` placeholder → ask once, never guess. Code conventions: `.omp/rules/code-conventions.md`.
-- Subagents are the project agents in `.omp/agents/` (`final-review`); the model roles `task` and `senior` live in `.omp/config.yml`.
+- Subagents are the project agents in `.omp/agents/` (`owner` writes each change `flow`, `diagnose` and `refactor` design; `final-review` reviews it); the model roles `task` and `senior` live in `.omp/config.yml`.
 - A feature's only working file is its brief `features/<slug>/PRD.md` (git-ignored); `document` turns it into docs and ADRs, then deletes the folder. Workflow state lives under `$(git rev-parse --git-dir)/superflow/`, never in the tree.
 - Decisions reserved for the operator: auth and permissions, data exposure, public API, schema. Ask; never default them. The brief records them as `Yours`, never asked again.
-- One clone, one tree: one working tree per clone; no extra worktrees for feature work. Never commit on `<trunk>`; never commit secrets (`.env*`, keys, tokens).
+- One clone, one tree: one working tree per clone; no extra worktrees for feature work (a throwaway worktree a script or skill creates and removes for a test run is fine). Work that cannot wait (a production bug, a kit update) parks the feature in progress: leftovers go on its branch as `wip:` (`git add -A && git commit -m "wip: <what> (parked)"` when `git status --porcelain` lists any; never stash), then `git switch <trunk> && git pull --ff-only`. Its git-ignored brief stays; `/flow <slug>` resumes it later. Never commit on `<trunk>`; never commit secrets (`.env*`, keys, tokens).
 - Schema changes stay backward-compatible: add first, remove in a later release. The old version keeps serving on the migrated schema, during the deploy and after a rollback.
 - `CONTEXT.md` (the glossary: use its words, never invent synonyms) and `docs/adr/` bind. Read the area's ADRs before touching it; a change that contradicts one → say "this contradicts ADR-NNNN" and ask. Create either only when the first term or decision needs it.
 - A fork install adds its own rules under `## Fork rules`; where they differ from these, Fork rules win.
