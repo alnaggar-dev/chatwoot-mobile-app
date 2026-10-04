@@ -33,7 +33,7 @@ type WhatsAppTemplateFormProps = {
 const SectionLabel = ({ label }: { label: string }) => (
   <Animated.Text
     style={tailwind.style(
-      'mb-3 text-[15px] font-inter-medium-24 tracking-[0.225px] text-gray-500',
+      'mb-3 text-[15px] font-inter-medium-24 tracking-[0.225px] text-ink-muted text-left',
     )}>
     {label}
   </Animated.Text>

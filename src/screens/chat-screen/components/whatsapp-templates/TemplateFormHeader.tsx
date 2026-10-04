@@ -36,7 +36,7 @@ const TemplateFormHeader = ({ title, canSend, onBack, onSend }: TemplateFormHead
       <Animated.Text
         numberOfLines={1}
         style={tailwind.style(
-          'flex-1 text-[17px] font-inter-medium-24 leading-[24px] tracking-[0.34px] text-gray-950',
+          'flex-1 text-[17px] font-inter-medium-24 leading-[24px] tracking-[0.34px] text-ink text-left',
         )}>
         {title}
       </Animated.Text>
@@ -46,13 +46,13 @@ const TemplateFormHeader = ({ title, canSend, onBack, onSend }: TemplateFormHead
           disabled={!canSend}
           {...handlers}
           style={tailwind.style(
-            'px-3 py-[7px] rounded-lg flex-row items-center justify-center min-w-[60px] min-h-[32px]',
-            canSend ? 'bg-gray-100' : 'bg-gray-50',
+            'px-3 py-[7px] rounded-control flex-row items-center justify-center min-w-[60px] min-h-[32px]',
+            canSend ? 'bg-brand' : 'bg-surface-subtle',
           )}>
           <Animated.Text
             style={tailwind.style(
               'text-base font-inter-medium-24 leading-[22px] tracking-[0.32px]',
-              canSend ? 'text-gray-950' : 'text-gray-500',
+              canSend ? 'text-white' : 'text-ink-muted',
             )}>
             {i18n.t('CONTENT_TEMPLATE.SEND')}
           </Animated.Text>
