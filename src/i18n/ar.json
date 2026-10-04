@@ -429,7 +429,8 @@
       "PHOTOS": "الصور",
       "CAMERA": "الكاميرا",
       "ATTACH_FILE": "إرفاق ملف",
-      "MACROS": "ماكروهات"
+      "MACROS": "ماكروهات",
+      "WHATSAPP_TEMPLATES": "قوالب واتساب"
     }
   },
   "CONVERSATION_TEAMS": {
@@ -526,6 +527,25 @@
     "EXECUTION_SUCCESS": "تم تنفيذ الماكرو بنجاح",
     "EXECUTION_ERROR": "تعذّر تنفيذ الماكرو",
     "NO_MACROS": "لم يُعثر على أي ماكرو"
+  },
+  "CONTENT_TEMPLATE": {
+    "TITLE": "القوالب",
+    "SELECT_TEMPLATE": "اختيار قالب واتساب",
+    "VARIABLES": "المتغيرات",
+    "SEND": "إرسال",
+    "NO_TEMPLATES": "لا توجد قوالب متاحة",
+    "NO_RESULTS": "لا توجد قوالب تطابق بحثك",
+    "SEARCH_PLACEHOLDER": "ابحث عن القالب الذي تريد إرساله",
+    "IMAGE_URL": "عنوان URL للصورة",
+    "VIDEO_URL": "عنوان URL للفيديو",
+    "DOCUMENT_URL": "عنوان URL للمستند",
+    "MEDIA_URL": "عنوان URL للوسائط",
+    "IMAGE_URL_PLACEHOLDER": "https://...",
+    "MEDIA_URL_PLACEHOLDER": "https://...",
+    "IMAGE_PREVIEW_FAILED": "تعذّر تحميل الصورة من عنوان URL",
+    "DOCUMENT_NAME": "اسم المستند",
+    "DOCUMENT_NAME_PLACEHOLDER": "اسم الملف (اختياري)",
+    "BUTTON_PARAMETERS": "معلمات الزر"
   },
   "SEARCH": {
     "TITLE": "البحث",
