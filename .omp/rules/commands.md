@@ -5,6 +5,7 @@ description: Project commands and facts the workflow skills and agents run by ke
 - Trunk: `custom/main`
 - Install deps: `pnpm install`
 - Test one file: `pnpm test -- <file>`
+- Parallel test env: `none` prepared by `none`
 - Full suite (local): `pnpm test`
 - Full suite in CI: `none` checks `none`
 - Lint changed files: `pnpm exec eslint --fix <files…>` on `*.ts, *.tsx`

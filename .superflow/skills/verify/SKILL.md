@@ -6,6 +6,7 @@ disable-model-invocation: true
 
 # Verify
 From `diagnose` or `prototype`, use steps 2–5 as that skill needs; it owns the result, so no report.
+A subagent that `flow` hands a group of a brief's items runs steps 2–5 for those items only: no stamps, no report; it returns one line per item in step 6's format, and `flow` stamps and writes the report.
 
 The commands below are keys in `.omp/rules/commands.md`; a key that is `none` skips what it drives. Evidence goes under `v=$(git rev-parse --git-dir)/superflow/<slug>/verify`, never in the tree.
 

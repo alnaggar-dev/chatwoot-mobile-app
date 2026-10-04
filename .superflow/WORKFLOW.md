@@ -7,6 +7,7 @@ Which skill for which need. Standing rules: `AGENTS.md`.
 | Drive it in the browser | `verify` proves Done-when items in the browser or by tests (used by `flow`) |
 | Docs, then the folder goes | `document` (run by `ship`) |
 | Land it | `ship` |
+| Small direct change (copy, a message, a setting) | edit it, then tell the operator "Run `/ship`." (`ship` reviews code no skill reviewed) |
 | Any bug or perf regression | `diagnose`, then `ship` |
 | Architecture pass (fork-owned code in a fork install) | `refactor`, then `ship` |
 | Design spike | `prototype` |

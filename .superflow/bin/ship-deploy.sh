@@ -5,26 +5,29 @@
 #   record k=v...  pr=<N|none> branch=<b|none> head=<40-hex|none> tests=cloud|local|skip|unknown;
 #                  also stores base=<origin/<trunk> sha> (not fetched: the trunk the checks ran on).
 #                  A record for another pr is dropped; a new record needs all four; a changed
-#                  head= clears tests= (a tests= in the same call is kept).
+#                  head= clears tests=, with a note unless the same call gives a new tests=.
 #   merge <N>      the record is PR N's with head= and base=; local HEAD is head= (else back to
 #                  step 4); no tracked edit (else back to step 3); origin/<trunk>, fetched, is
 #                  still base= and in head= (else back to step 4). Waits for the PR's checks
 #                  (`gh pr checks N --watch --fail-fast`; "no checks reported" is not green:
-#                  retried for ~5 minutes, then stop). A repo with no CI (**Full suite in CI**
-#                  `none` and no .github/workflows/ in head='s tree) merges without checks when
-#                  gh still reports none after one poll. Then `gh pr merge N --<Merge method>
-#                  --match-head-commit <head>` (`--merge` in a fork install), never --admin;
-#                  refused → back to step 4. Prints `merged: PR #N at <head>`.
+#                  retried for ~5 minutes, then stop), then fetches origin/<trunk> again: it must
+#                  still be base= and in head= (moved during the checks → back to step 4). A repo
+#                  with no CI (**Full suite in CI** `none` and no .github/workflows/ in head='s
+#                  tree) merges without checks when gh still reports none after one poll. Then
+#                  `gh pr merge N --<Merge method> --match-head-commit <head>` (`--merge` in a
+#                  fork install), never --admin; refused → back to step 4. Prints `merged: PR #N
+#                  at <head>`.
 #   land <N|sha>   the landed candidate. PR N must be MERGED into <trunk>; sha = its merge commit
 #                  when that is on origin/<trunk> (fetched), else its head (a PR landed by push),
 #                  else stop. A bare sha must be on origin/<trunk>; its PR is the one merged PR
 #                  into <trunk> whose merge commit or head it is (several → stop; none →
-#                  pr=none branch=none head=none). A record for another pr or sha is dropped.
-#                  tests= kept only when the PR's head equals the record's head= and, for a
-#                  merge commit, <sha>^1 is in that head; `cloud` only when the head's checks
-#                  passed the full suite (see below); no record or no tests= → `cloud` when they
-#                  did, else `unknown`; pr=none → `unknown`. Writes pr, branch (the record's when
-#                  set), head, tests, sha; prints the record and `tests=<v>`.
+#                  pr=none branch=none head=none). A record for another pr or sha is dropped,
+#                  except one whose sha= already holds the candidate (an adopt moved it on):
+#                  kept, exit 5. tests= kept only when the PR's head equals the record's head=
+#                  and, for a merge commit, <sha>^1 is in that head; `cloud` only when the head's
+#                  checks passed the full suite (see below); no record or no tests= → `cloud`
+#                  when they did, else `unknown`; pr=none → `unknown`. Writes pr, branch (the
+#                  record's when set), head, tests, sha; prints the record and `tests=<v>`.
 #   adopt <sha>    the validation environment serves a later trunk commit: <sha> must be on
 #                  origin/<trunk> and hold the record's sha (else stop: wait for it, then adopt).
 #                  Resolves its PR and tests= as `land <sha>` (another PR's tests= never carry
@@ -59,8 +62,9 @@
 # SHIP_DEPLOY_SETTLE before concluding a push has no Actions run (default 30).
 # Exit: 0 ok; 1 stopped with a message (or an unreadable record); 2 usage; 3 deploy: **Deploy**
 # is `none`, nothing deployed; 4 deploy: `automatic on merge` and no Actions run for the sha
-# (ask the operator: nothing deployable, or deployed outside Actions). Messages go to stderr,
-# results to stdout. Safe under macOS /bin/bash 3.2.
+# (ask the operator: nothing deployable, or deployed outside Actions); 5 land: the record's
+# sha= already holds the candidate, record kept (ship resumes at step 6 with it). Messages go
+# to stderr, results to stdout. Safe under macOS /bin/bash 3.2.
 set -euo pipefail
 set -f
 
@@ -311,13 +315,19 @@ cmd_record() {
 	[ -n "$HAVE" ] || { [ -n "$pr" ] && [ -n "$branch" ] && [ -n "$head" ] && [ -n "$tests" ]; } ||
 		die "a new record needs pr=, branch=, head= and tests="
 	if [ -n "$head" ] && [ -n "$R_head" ] && [ "$head" != "$R_head" ] && [ -n "$R_tests" ]; then
-		say "head moved from $R_head: its tests=$R_tests no longer counts"
+		[ -n "$tests" ] || say "head moved from $R_head: its tests=$R_tests no longer counts"
 		R_tests=''
 	fi
 	R_pr=${pr:-$R_pr} R_branch=${branch:-$R_branch} R_head=${head:-$R_head} R_tests=${tests:-$R_tests} R_base=$tip
 	rec_save
 }
 
+# base_ok: origin/<trunk>, fetched now, is still the record's base= and in its head=.
+base_ok() {
+	fetch_trunk
+	[ "$TIP" = "$R_base" ] || die "origin/$TRUNK moved since the checks ($R_base → $TIP): back to step 4"
+	anc "$TIP" "$R_head" || die "the tested head $R_head lacks origin/$TRUNK: back to step 4"
+}
 # wait_checks <N> <tries> → 0 checks passed; 3 gh reported no checks <tries> times; stops on red.
 wait_checks() {
 	local i=0 rc
@@ -346,9 +356,7 @@ cmd_merge() {
 	[ -z "$st" ] || die "tracked edits not committed: back to step 3"
 	merge_method
 	ci=$(fact "Full suite in CI") || exit 1
-	fetch_trunk
-	[ "$TIP" = "$R_base" ] || die "origin/$TRUNK moved since the checks ($R_base → $TIP): back to step 4"
-	anc "$TIP" "$R_head" || die "the tested head $R_head lacks origin/$TRUNK: back to step 4"
+	base_ok
 	wf=$(git ls-tree --name-only "$R_head" .github/workflows/) || die "git ls-tree $R_head failed"
 	if [ "$ci" = none ] && [ -z "$wf" ]; then
 		wait_checks "$1" 2 || rc=$?
@@ -357,6 +365,7 @@ cmd_merge() {
 		wait_checks "$1" "$TRIES" || rc=$?
 		[ "$rc" != 3 ] || die "PR #$1: still no checks reported after $((TRIES * POLL))s; never green: stop and ask"
 	fi
+	base_ok
 	gh pr merge "$1" "--$METHOD" --match-head-commit "$R_head" >&2 || die "gh pr merge $1 refused (the head moved off $R_head?): back to step 4"
 	say "merged: PR #$1 at $R_head"
 }
@@ -384,7 +393,13 @@ cmd_land() {
 		usage
 	fi
 	[ "$pr" = none ] || { head=$P_head branch=$P_ref; }
-	if [ -n "$HAVE" ] && { [ "$R_pr" != "$pr" ] || { [ -n "$R_sha" ] && [ "$R_sha" != "$sha" ]; }; }; then rec_drop; fi
+	if [ -n "$HAVE" ] && { [ "$R_pr" != "$pr" ] || { [ -n "$R_sha" ] && [ "$R_sha" != "$sha" ]; }; }; then
+		if [[ $R_sha =~ $HEX40 ]] && git cat-file -e "$R_sha^{commit}" 2>/dev/null && anc "$sha" "$R_sha"; then
+			printf 'ship-deploy: %s\n' "the record's sha=$R_sha (PR #${R_pr:-none}) already holds $sha (an adopt moved the candidate on); record kept: resume at ship step 6, never land again" >&2
+			exit 5
+		fi
+		rec_drop
+	fi
 	evidence "$sha"
 	R_pr=$pr R_branch=${R_branch:-$branch} R_head=$head R_tests=$E_tests R_sha=$sha
 	rec_save

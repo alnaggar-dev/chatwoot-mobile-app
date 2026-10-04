@@ -19,7 +19,7 @@ Check against `AGENTS.md` Fork rules → **Customizations**. Deviation → say s
 
 ## 3. Place it in the ledger
 
-Shape: the `.fork/CHANGES.md` preamble. Match changed files against every entry's Files. A file under several entries → pick the entry by what the change is for, not by the file. Existing entry → update its fields (fork-owned files of the change may go in its Files). None fits and the change touches an upstream-owned file → new entry; a change to fork-owned files only needs no entry. The change removes a customization → delete its entry and follow `RETIRE.md`. One change may touch several entries. Every Tripwire path written must match a file at the base: `.fork/tripwires.sh paths "$b" <slugs written>` prints nothing.
+Shape: the `.fork/CHANGES.md` preamble. Match changed files against every entry's Files. A file under several entries → pick the entry by what the change is for, not by the file. Existing entry → update its fields (fork-owned files of the change may go in its Files). A copy fix (wording or a typo in upstream-owned user-facing text, no behavior change) → the `upstream-copy-fixes` entry; the first creates it with all eight fields (Files and Tripwire paths: the fixed files; Verify: one assertion per fix that the fixed text is present, so a port bringing the old text back fails it; Check: none), each later one adds its file to Files and Tripwire paths and its assertion to Verify (step 5 proves it). Otherwise none fits and the change touches an upstream-owned file → new entry; a change to fork-owned files only needs no entry. The change removes a customization → delete its entry and follow `RETIRE.md`. One change may touch several entries. Every Tripwire path written must match a file at the base: `.fork/tripwires.sh paths "$b" <slugs written>` prints nothing.
 
 ## 4. Honesty check
 
@@ -44,24 +44,24 @@ Prove it in throwaway worktrees: name every program the Verify runs that the bas
 - **Pre-change `HEAD`**, when the change adds or changes the behavior asserted: `.fork/prove-verify.sh head <slug> <programs, data>` must fail too; never required for a backfill. A checker-only addition that asserts nothing new (a self-test flag added to a Verify) passes there by design: break the condition it checks in the worktree and watch it fail. Skip for a ledger-only commit of committed work.
 - **Working tree**: `.fork/check.sh <slug>` passes.
 
-## 6. Checks
-
-`.fork/check.sh` and `.fork/check.sh --check <touched entries that still exist>`. A failure I caused → fix. Unrelated → note it in the commit body.
-
-## 7. Docs
+## 6. Docs
 
 A touched entry's Files include a Markdown doc (`docs/*.md`, `CONTEXT.md`, …) and this change alters what it describes → update it, rather than adding a new doc. A new feature doc from `document` is just another changed file for step 4; when step 3 chose an entry, add the doc to its Files, and add its "registered as" line and Verification map naming the entry if missing; when it chose none, the doc names no entry.
 
+## 7. Checks
+
+`.fork/check.sh` and `.fork/check.sh --check <touched entries that still exist>`. A failure I caused → fix. Unrelated → note it in the commit body.
+
 ## 8. Commit
 
-Stage by name every path steps 3–7 wrote or repaired (ledger, docs, code fixes, Verify programs and data); never `git add -A` again, so what step 1 left out stays out. `git diff --quiet -- <every path step 1 staged or steps 3–7 wrote>` must pass: the checks read the working tree, the commit takes the index. A path changed after step 6 → rerun step 6.
+Stage by name every path steps 3–7 wrote or repaired (ledger, docs, code fixes, Verify programs and data); never `git add -A` again, so what step 1 left out stays out. `git diff --quiet -- <every path step 1 staged or steps 3–7 wrote>` must pass: the checks read the working tree, the commit takes the index. A path changed after step 7 → rerun step 7.
 
 ```sh
 git commit -m "custom(<area>): <what changed>" -m "<one sentence>" -m "Fork-Flow-Change: <slug>
 Fork-Flow-Change: <each other touched slug>"
 ```
 
-Conventional Commits, no AI-assistant attribution: a customization's subject is `custom(<area>): …`, any other change takes its conventional type (`feat`, `fix`, `chore`, `docs`, …); if the project lints commit messages (commitlint `type-enum` or similar), `custom` and `port` must be allowed types. The trailer block is the last paragraph (a trailer inside the body is not parsed; the `commit-msg` hook refuses a commit without one). No entry touched still gets one, so `ship` never folds it as WIP: `Fork-Flow-Change: superflow-workflow` when only kit folders changed, `Fork-Flow-Change: none` for any other change that touches no entry (fork-owned files only, ADRs, changelogs, `.fork/PORTS.md`).
+Conventional Commits, no AI-assistant attribution: a customization's subject is `custom(<area>): …`, any other change takes its conventional type (`feat`, `fix`, `chore`, `docs`, …); if the project lints commit messages (commitlint `type-enum` or similar), `custom` and `port` must be allowed types. The trailer block is the last paragraph (a trailer inside the body is not parsed; the `commit-msg` hook refuses a commit without one). No entry touched still gets one, so `ship` never folds it as WIP: `Fork-Flow-Change: superflow-workflow` when the change touches only workflow files (the kit folders and the project's own workflow files: `.omp/rules/`, `.superflow/project.sh`, `.fork/CHANGES.md` preamble, `.fork/PORTS.md` preamble) and no other entry, `Fork-Flow-Change: none` for any other change that touches no entry (fork-owned files only, ADRs, changelogs, `.fork/PORTS.md` entries).
 
 ## 9. Report
 
