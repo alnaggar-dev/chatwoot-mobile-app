@@ -39,6 +39,6 @@ Ledger: foxdesk-rebrand, foxdesk-redesign, mobile-account-deletion, android-push
 agents-md: none
 Deploy: app version 4.8.0 (app.config.ts, package.json); @chatwoot/utils 0.0.56 is a JavaScript-only package, no native rebuild; post-port step `pnpm install`
 Follow-ups:
-  - done after the port: the WhatsApp templates sheet moved onto the foxdesk-redesign tokens and got the rtl-text-alignment overrides (template inputs right-aligned under RTL, media-URL input kept LTR); rtl-and-arabic-locale's Verify now checks ar.json/en.json key parity
+  - done after the port: the WhatsApp templates sheet and the attachment menu's shared row label (CommandOptionsMenu.tsx) moved onto the foxdesk-redesign tokens, and the sheet got the rtl-text-alignment overrides (template inputs right-aligned under RTL, media-URL input kept LTR); rtl-and-arabic-locale's Verify now checks ar.json/en.json key parity
   - this port branch was cut from local custom/main, which held 3 unpushed commits (SuperFlow kit v5 and scripts/__pycache__/build-din-next-fonts.cpython-313.pyc); they land with this port, and the .pyc looks committed by accident
   - v4.9.0 contains 83b40a1 (#1130), upstream's own fix for rn79-back-handler: retire the entry inside the v4.9.0 port, not before it (fork-change RETIRE.md allows it only once the release is merged) — at the src/app.tsx conflict take upstream's subscription code and error boundary, keep the FoxDesk component name, and delete the entry in the same resolution
