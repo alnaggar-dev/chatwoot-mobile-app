@@ -1,11 +1,10 @@
 import React, { forwardRef, useCallback } from 'react';
-import { Pressable, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import * as WebBrowser from 'expo-web-browser';
 import { useSelector } from 'react-redux';
 import { Button } from '@/components-next';
+import { Sheet, type SheetRef } from '@/components-next/common/sheet/Sheet';
 import { tailwind } from '@/theme';
 import { useAppDispatch } from '@/hooks';
 import { selectUserId } from '@/store/auth/authSelectors';
@@ -25,15 +24,11 @@ const BULLET_KEYS = [
 // left = start: RN flips it under RTL, natural alignment on iOS does not
 const BODY_TEXT_STYLE = 'text-[14px] font-inter-normal-20 leading-[20px] text-gray-800 text-left';
 
-const renderBackdrop = (props: BottomSheetBackdropProps) => (
-  <BottomSheetBackdrop {...props} pressBehavior="none" appearsOnIndex={0} disappearsOnIndex={-1} />
-);
-
 type CaptainConsentSheetProps = {
   onAllow?: () => void;
 };
 
-export const CaptainConsentSheet = forwardRef<BottomSheetModal, CaptainConsentSheetProps>(
+export const CaptainConsentSheet = forwardRef<SheetRef, CaptainConsentSheetProps>(
   ({ onAllow }, ref) => {
     const dispatch = useAppDispatch();
     const { bottom } = useSafeAreaInsets();
@@ -70,16 +65,13 @@ export const CaptainConsentSheet = forwardRef<BottomSheetModal, CaptainConsentSh
     }, [locale]);
 
     return (
-      <BottomSheetModal
-        ref={ref}
-        backdropComponent={renderBackdrop}
-        handleIndicatorStyle={tailwind.style('overflow-hidden bg-blackA-A6 w-8 h-1 rounded-[11px]')}
-        handleStyle={tailwind.style('p-0 h-4 pt-[5px]')}
-        style={tailwind.style('rounded-t-[26px] overflow-hidden')}
-        enablePanDownToClose={false}
-        enableDynamicSizing
-        maxDynamicContentSize={windowHeight * 0.85}>
-        <BottomSheetScrollView
+      // The sheet hugs the content; the ScrollView caps it at 85% of the screen and scrolls the
+      // rest, so Allow / Not Now stay reachable in a sheet that cannot be dismissed by gesture.
+      // (Sheet's native `scrollable` needs a fixed detent, so it is not used here.)
+      <Sheet ref={ref} autoSize dismissible={false}>
+        <ScrollView
+          style={{ maxHeight: windowHeight * 0.85 }}
+          nestedScrollEnabled
           showsVerticalScrollIndicator={false}
           contentContainerStyle={tailwind.style('px-4', `pb-[${24 + bottom}px]`)}>
           <Text
@@ -130,8 +122,8 @@ export const CaptainConsentSheet = forwardRef<BottomSheetModal, CaptainConsentSh
               </>
             )}
           </View>
-        </BottomSheetScrollView>
-      </BottomSheetModal>
+        </ScrollView>
+      </Sheet>
     );
   },
 );
