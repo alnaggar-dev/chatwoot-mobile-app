@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { I18nManager, Image, KeyboardTypeOptions, View } from 'react-native';
+import { I18nManager, Image, KeyboardTypeOptions, TextInput, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 
 import i18n from '@/i18n';
 import { tailwind } from '@/theme';
@@ -47,7 +46,7 @@ const TemplateMediaInputField = ({
         )}>
         {label}
       </Animated.Text>
-      <BottomSheetTextInput
+      <TextInput
         value={value}
         onChangeText={onChangeText}
         onFocus={onFocus}

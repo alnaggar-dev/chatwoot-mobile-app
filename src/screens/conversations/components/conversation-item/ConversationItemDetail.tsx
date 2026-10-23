@@ -115,7 +115,7 @@ export const ConversationItemDetail = memo((props: ConversationDetailSubCellProp
 
   return (
     <AnimatedNativeView
-      layout={LinearTransition.springify().damping(28).stiffness(200)}
+      layout={LinearTransition.springify().mass(1).damping(21).stiffness(115)}
       style={tailwind.style('flex-1 gap-0.5 py-2 border-b-[1px] border-b-blackA-A3')}>
       <AnimatedNativeView style={tailwind.style('flex-row items-center gap-2 min-h-[20px]')}>
         {/* left = start: RN flips it under RTL, natural alignment on iOS does not */}

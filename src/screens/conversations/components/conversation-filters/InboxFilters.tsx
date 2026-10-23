@@ -1,7 +1,6 @@
 import React from 'react';
-import { Pressable } from 'react-native';
+import { Pressable, ScrollView } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 import { useRefsContext } from '@/context';
 import { tailwind } from '@/theme';
@@ -31,7 +30,7 @@ const InboxCell = (props: InboxCellProps) => {
   const handlePreferredAssigneeTypePress = () => {
     hapticSelection?.();
     dispatch(setFilters({ key: 'inbox_id', value: value.id.toString() }));
-    setTimeout(() => filtersModalSheetRef.current?.dismiss({ overshootClamping: true }), 1);
+    setTimeout(() => filtersModalSheetRef.current?.dismiss(), 1);
   };
 
   return (
@@ -84,7 +83,7 @@ export const InboxFilters = () => {
   }));
 
   return (
-    <BottomSheetScrollView
+    <ScrollView
       contentContainerStyle={tailwind.style('pb-4')}
       stickyHeaderIndices={[0]}
       showsVerticalScrollIndicator={true}>
@@ -96,6 +95,6 @@ export const InboxFilters = () => {
           <InboxCell key={index} {...{ value }} />
         ))}
       </Animated.View>
-    </BottomSheetScrollView>
+    </ScrollView>
   );
 };

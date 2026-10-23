@@ -1,6 +1,12 @@
 import React from 'react';
 import { Pressable, Text, ViewStyle } from 'react-native';
-import Animated, { AnimatedStyle } from 'react-native-reanimated';
+import Animated, {
+  AnimatedStyle,
+  useAnimatedStyle,
+  useDerivedValue,
+  withDelay,
+  withTiming,
+} from 'react-native-reanimated';
 import { Icon } from '@/components-next/common';
 import { CheckedIcon, CloseIcon, FilterIcon, UncheckedIcon, SearchIcon } from '@/svg-icons';
 import { tailwind } from '@/theme';
@@ -19,14 +25,11 @@ type ConversationHeaderPresenterProps = {
   onClearFilter: () => void;
 };
 
-type SearchOrSelectAllActionProps = {
+type ActionSlotProps = {
   currentState: HeaderState;
   isSelectedAll: boolean;
-  onLeftIconPress: () => void;
-};
-
-type ClearFilterActionProps = {
   filtersAppliedCount: number;
+  onLeftIconPress: () => void;
   onClearFilter: () => void;
   handlers: Record<string, unknown>;
   animatedStyle: ViewStyle | AnimatedStyle<ViewStyle>;
@@ -38,62 +41,100 @@ type FilterOrCloseActionProps = {
   onRightIconPress: () => void;
 };
 
-const SearchOrSelectAllAction = ({
+const CROSSFADE_MS = 180;
+
+// The active action stays in the layout and sizes the slot; inactive ones sit on top of it at
+// the end edge while they fade out, so swapping never shifts the actions next to it.
+const layerStyle = (active: boolean) =>
+  active
+    ? tailwind.style('flex-row items-center')
+    : [tailwind.style('absolute top-0 bottom-0 flex-row items-center'), { end: 0 }];
+
+const ActionSlot = ({
   currentState,
   isSelectedAll,
-  onLeftIconPress,
-}: SearchOrSelectAllActionProps) => {
-  const { entering, exiting } = useHeaderAnimation();
-
-  if (currentState === 'Filter' || currentState === 'Search') return null;
-  if (currentState !== 'Select') {
-    return (
-      <Pressable onPress={onLeftIconPress} hitSlop={16}>
-        <Animated.View exiting={exiting} entering={entering}>
-          <Icon size={24} icon={<SearchIcon stroke={tailwind.color('text-ink-secondary')} />} />
-        </Animated.View>
-      </Pressable>
-    );
-  }
-
-  return (
-    <Pressable onPress={onLeftIconPress} hitSlop={16}>
-      <Animated.View exiting={exiting} entering={entering}>
-        <Icon
-          size={24}
-          icon={
-            isSelectedAll ? (
-              <CheckedIcon />
-            ) : (
-              <UncheckedIcon stroke={tailwind.color('text-ink-secondary')} />
-            )
-          }
-        />
-      </Animated.View>
-    </Pressable>
-  );
-};
-
-const ClearFilterAction = ({
   filtersAppliedCount,
+  onLeftIconPress,
   onClearFilter,
   handlers,
   animatedStyle,
-}: ClearFilterActionProps) => {
-  const { entering, exiting } = useHeaderAnimation();
+}: ActionSlotProps) => {
+  const searchActive = currentState === 'none';
+  const clearActive = currentState === 'Filter';
+  const selectActive = currentState === 'Select';
+
+  const searchOpacity = useDerivedValue(
+    () =>
+      withDelay(
+        searchActive ? CROSSFADE_MS : 0,
+        withTiming(searchActive ? 1 : 0, { duration: CROSSFADE_MS }),
+      ),
+    [searchActive],
+  );
+  const clearOpacity = useDerivedValue(
+    () =>
+      withDelay(
+        clearActive ? CROSSFADE_MS : 0,
+        withTiming(clearActive ? 1 : 0, { duration: CROSSFADE_MS }),
+      ),
+    [clearActive],
+  );
+  const selectOpacity = useDerivedValue(
+    () =>
+      withDelay(
+        selectActive ? CROSSFADE_MS : 0,
+        withTiming(selectActive ? 1 : 0, { duration: CROSSFADE_MS }),
+      ),
+    [selectActive],
+  );
+
+  const searchStyle = useAnimatedStyle(() => ({ opacity: searchOpacity.value }));
+  const clearStyle = useAnimatedStyle(() => ({ opacity: clearOpacity.value }));
+  const selectStyle = useAnimatedStyle(() => ({ opacity: selectOpacity.value }));
 
   return (
-    <Animated.View style={animatedStyle} exiting={exiting} entering={entering}>
-      <Pressable onPress={onClearFilter} disabled={filtersAppliedCount === 0} {...handlers}>
-        <Text
-          style={tailwind.style(
-            'text-md font-inter-medium-24 leading-[17px] tracking-[0.24px]',
-            filtersAppliedCount === 0 ? 'text-ink-muted' : 'text-brand',
-          )}>
-          {i18n.t('CONVERSATION.HEADER.CLEAR_FILTER')}
-          {filtersAppliedCount > 0 ? ` (${filtersAppliedCount})` : ''}
-        </Text>
-      </Pressable>
+    <Animated.View style={tailwind.style('h-6 flex-row items-center')}>
+      <Animated.View
+        style={[layerStyle(clearActive), clearStyle]}
+        pointerEvents={clearActive ? 'auto' : 'none'}>
+        <Pressable onPress={onClearFilter} disabled={filtersAppliedCount === 0} {...handlers}>
+          <Animated.View style={animatedStyle}>
+            <Text
+              style={tailwind.style(
+                'text-md font-inter-medium-24 leading-[17px] tracking-[0.24px]',
+                filtersAppliedCount === 0 ? 'text-ink-muted' : 'text-brand',
+              )}>
+              {i18n.t('CONVERSATION.HEADER.CLEAR_FILTER')}
+              {filtersAppliedCount > 0 ? ` (${filtersAppliedCount})` : ''}
+            </Text>
+          </Animated.View>
+        </Pressable>
+      </Animated.View>
+
+      <Animated.View
+        style={[layerStyle(searchActive), searchStyle]}
+        pointerEvents={searchActive ? 'auto' : 'none'}>
+        <Pressable onPress={onLeftIconPress} hitSlop={16}>
+          <Icon size={24} icon={<SearchIcon stroke={tailwind.color('text-ink-secondary')} />} />
+        </Pressable>
+      </Animated.View>
+
+      <Animated.View
+        style={[layerStyle(selectActive), selectStyle]}
+        pointerEvents={selectActive ? 'auto' : 'none'}>
+        <Pressable onPress={onLeftIconPress} hitSlop={16}>
+          <Icon
+            size={24}
+            icon={
+              isSelectedAll ? (
+                <CheckedIcon />
+              ) : (
+                <UncheckedIcon stroke={tailwind.color('text-ink-secondary')} />
+              )
+            }
+          />
+        </Pressable>
+      </Animated.View>
     </Animated.View>
   );
 };
@@ -147,18 +188,14 @@ export const ConversationHeaderPresenter = ({
           {i18n.t('CONVERSATION.HEADER.TITLE')}
         </Text>
         <Animated.View style={tailwind.style('flex flex-row items-center gap-5')}>
-          {currentState === 'Filter' && (
-            <ClearFilterAction
-              filtersAppliedCount={filtersAppliedCount}
-              onClearFilter={onClearFilter}
-              handlers={handlers}
-              animatedStyle={animatedStyle}
-            />
-          )}
-          <SearchOrSelectAllAction
+          <ActionSlot
             currentState={currentState}
             isSelectedAll={isSelectedAll}
+            filtersAppliedCount={filtersAppliedCount}
             onLeftIconPress={onLeftIconPress}
+            onClearFilter={onClearFilter}
+            handlers={handlers}
+            animatedStyle={animatedStyle}
           />
           <FilterOrCloseAction
             currentState={currentState}

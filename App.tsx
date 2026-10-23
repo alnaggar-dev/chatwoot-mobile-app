@@ -4,6 +4,7 @@ import notifee, { EventType } from '@notifee/react-native';
 import Constants from 'expo-constants';
 import App from './src/app';
 import { storePendingNotificationData } from './src/utils/notificationPressUtils';
+import { isTransportError } from './src/utils/sentryUtils';
 
 // TODO: It is a temporary fix to fix the reanimated logger issue
 // Ref: https://github.com/gorhom/react-native-bottom-sheet/issues/1983
@@ -22,8 +23,8 @@ notifee.onBackgroundEvent(async ({ type, detail }) => {
 if (!__DEV__) {
   Sentry.init({
     dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
-    tracesSampleRate: 1.0,
-    attachScreenshot: true,
+    tracesSampleRate: 0.05,
+    beforeSend: (event, hint) => (isTransportError(hint?.originalException) ? null : event),
   });
 }
 

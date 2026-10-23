@@ -25,4 +25,4 @@ pnpm start
 
 See `.env.example` for the required environment variables.
 
-_FoxDesk Ai_ — Released under the MIT License. Based on the Chatwoot mobile app (&copy; 2017-2025, Chatwoot Inc, MIT License).
+_FoxDesk Ai_ — Released under the MIT License. Based on the Chatwoot mobile app (&copy; 2017-2026, Chatwoot Inc, MIT License).

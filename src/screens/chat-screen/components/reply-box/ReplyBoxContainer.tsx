@@ -10,7 +10,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { BottomSheetModal } from '@gorhom/bottom-sheet';
+import type { SheetRef } from '@/components-next/common/sheet/Sheet';
 
 import { useChatWindowContext, useRefsContext } from '@/context';
 import {
@@ -137,7 +137,7 @@ const BottomSheetContent = () => {
   const originalContent = useAppSelector(selectOriginalContent);
   const followUpContext = useAppSelector(selectFollowUpContext);
   const { toneSelectionSheetRef } = useRefsContext();
-  const captainConsentSheetRef = useRef<BottomSheetModal>(null);
+  const captainConsentSheetRef = useRef<SheetRef>(null);
   const hasCaptainConsent = useAppSelector(selectCaptainConsent);
 
   // Reset copilot state and abort in-flight requests when conversation changes or unmount
@@ -524,7 +524,7 @@ const BottomSheetContent = () => {
       )}
 
       <Animated.View
-        layout={isCopilotActive ? undefined : LinearTransition.springify().damping(38).stiffness(240)}
+        layout={isCopilotActive ? undefined : LinearTransition.springify().mass(1).damping(29).stiffness(140)}
         style={tailwind.style(
           `pb-2 border-t-[1px] border-t-blackA-A3 ${shouldShowReplyHeader ? 'pt-0' : 'pt-2'}`,
         )}>
@@ -562,7 +562,7 @@ const BottomSheetContent = () => {
         ) : null}
         {!isVoiceRecorderOpen ? (
           <Animated.View
-            layout={isCopilotActive ? undefined : LinearTransition.springify().damping(20).stiffness(180)}
+            layout={isCopilotActive ? undefined : LinearTransition.springify().mass(1).damping(15).stiffness(105)}
             style={tailwind.style('flex flex-row px-1 items-end z-20 relative')}>
             {!isCopilotActive && attachmentsLength === 0 && shouldShowFileUpload && (
               <AddCommandButton
