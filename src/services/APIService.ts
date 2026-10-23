@@ -21,11 +21,11 @@ function deviceHeaders(): Record<string, string> {
   const osVersion = String(Device.osVersion ?? Platform.Version);
   const model = Device.modelName ?? 'Unknown';
   return {
-    'X-Chatwoot-Client-Name': CLIENT_NAME,
-    'X-Chatwoot-Client-Version': CLIENT_VERSION,
-    'X-Chatwoot-Platform': platform,
-    'X-Chatwoot-Platform-Version': osVersion,
-    'X-Chatwoot-Device-Model': model,
+    'X-Foxdeskai-Client-Name': CLIENT_NAME,
+    'X-Foxdeskai-Client-Version': CLIENT_VERSION,
+    'X-Foxdeskai-Platform': platform,
+    'X-Foxdeskai-Platform-Version': osVersion,
+    'X-Foxdeskai-Device-Model': model,
     'User-Agent': `${CLIENT_NAME}/${CLIENT_VERSION} (${platform} ${osVersion}; ${model})`,
   };
 }

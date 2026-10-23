@@ -589,7 +589,7 @@
       "BULLET_CONVERSATION": "This conversation’s customer, agent and bot messages, including voice-message transcripts, plus its conversation number, channel name and conversation custom attributes — private notes are not sent and attachment files are not uploaded (Improve, Suggest reply, Summarize, follow-ups)",
       "BULLET_IMPROVE": "For Improve reply: the contact’s ID, name, email, phone, location, country, notes and custom attributes",
       "BULLET_SUGGEST": "For Suggest reply: your name and message signature",
-      "PURPOSE": "FoxDesk sends this data to OpenAI to generate the text you requested. OpenAI may keep it for up to 30 days for abuse monitoring. You can withdraw consent any time in Settings › Captain AI.",
+      "PURPOSE": "FoxDesk Ai sends this data to OpenAI to generate the text you requested. OpenAI may keep it for up to 30 days for abuse monitoring. You can withdraw consent any time in Settings › Captain AI.",
       "PRIVACY_POLICY": "Privacy Policy",
       "ALLOW": "Allow",
       "NOT_NOW": "Not Now",

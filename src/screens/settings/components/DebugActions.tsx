@@ -28,7 +28,7 @@ interface DebugAction {
 const DEBUG_ACTIONS: DebugAction[] = [
   {
     key: 'foxdesk_version',
-    label: 'FoxDesk Version',
+    label: 'FoxDesk Ai Version',
     value: '',
   },
   {
