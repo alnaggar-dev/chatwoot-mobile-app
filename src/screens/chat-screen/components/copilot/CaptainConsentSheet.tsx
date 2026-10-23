@@ -1,5 +1,5 @@
 import React, { forwardRef, useCallback } from 'react';
-import { Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
 import { useSelector } from 'react-redux';
@@ -32,7 +32,6 @@ export const CaptainConsentSheet = forwardRef<SheetRef, CaptainConsentSheetProps
   ({ onAllow }, ref) => {
     const dispatch = useAppDispatch();
     const { bottom } = useSafeAreaInsets();
-    const { height: windowHeight } = useWindowDimensions();
     const userId = useSelector(selectUserId);
     const locale = useSelector(selectLocale);
     const hasConsent = useSelector(selectCaptainConsent);
@@ -65,13 +64,10 @@ export const CaptainConsentSheet = forwardRef<SheetRef, CaptainConsentSheetProps
     }, [locale]);
 
     return (
-      // The sheet hugs the content; the ScrollView caps it at 85% of the screen and scrolls the
-      // rest, so Allow / Not Now stay reachable in a sheet that cannot be dismissed by gesture.
-      // (Sheet's native `scrollable` needs a fixed detent, so it is not used here.)
-      <Sheet ref={ref} autoSize dismissible={false}>
+      // A fixed 85% detent with native `scrollable` (TrueSheet supports scrolling only with fixed
+      // detents), so Allow / Not Now stay reachable in a sheet that cannot be dismissed by gesture.
+      <Sheet ref={ref} detents={[0.85]} scrollable dismissible={false}>
         <ScrollView
-          style={{ maxHeight: windowHeight * 0.85 }}
-          nestedScrollEnabled
           showsVerticalScrollIndicator={false}
           contentContainerStyle={tailwind.style('px-4', `pb-[${24 + bottom}px]`)}>
           <Text
